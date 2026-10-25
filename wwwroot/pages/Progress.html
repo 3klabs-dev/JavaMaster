@@ -206,34 +206,22 @@
             }
         });
 
-        // Ranks (XP thresholds only; no level numbers)
-        const ranks = [
-            { name: 'Starter',  min: 0,    max: 300,    icon: '/rank titles/starter.png' },
-            { name: 'Beginner', min: 300,  max: 700,    icon: '/rank titles/beginner.png' },
-            { name: 'Rising',   min: 700,  max: 1200,   icon: '/rank titles/rising.png' },
-            { name: 'Skilled',  min: 1200, max: 1800,   icon: '/rank titles/skilled.png' },
-            { name: 'Pro',      min: 1800, max: 3000,   icon: '/rank titles/pro.png' },
-            { name: 'Elite',    min: 3000, max: 4500,   icon: '/rank titles/elite.png' },
-            { name: 'Boss',     min: 4500, max: 6500,   icon: '/rank titles/boss.png' },
-            { name: 'Legend',   min: 6500, max: 999999, icon: '/rank titles/legend.png' }
-        ];
-
-        // Load saved data from localStorage
-        let streakDays = parseInt(localStorage.getItem('streakDays')) || 0;
-        let totalXP = parseInt(localStorage.getItem('totalXP')) || 0;
-        let lastPlayDate = localStorage.getItem('lastPlayDate') || '';
+        // Player data comes from the server. /api/me is the only place it is
+        // read from, so this page can never disagree with the API.
+        let streakDays = 0;
+        let totalXP = 0;
+        let rankInfo = { name: 'Starter', minXp: 0, maxXp: 300, icon: '/rank titles/starter.png' };
+        let activeToday = false;
 
         function getCurrentRank() {
-            const r = [...ranks].reverse().find(x => totalXP >= x.min) || ranks[0];
-            return { name: r.name, xpRange: [r.min, r.max], iconPath: r.icon };
+            return { name: rankInfo.name, xpRange: [rankInfo.minXp, rankInfo.maxXp], iconPath: rankInfo.icon };
         }
 
         function updateCoffeeIcon() {
             const coffeeIcon = document.getElementById('coffeeIcon');
-            const today = new Date().toDateString();
 
-            // steaming cup if played today, or if the streak was just repaired today
-            if (lastPlayDate === today || localStorage.getItem('repairDate') === today) {
+            // Steaming cup while the streak is alive, cold cup once it has lapsed.
+            if (activeToday || streakDays > 0) {
                 coffeeIcon.src = '/images/coffee streak.gif';
             } else {
                 coffeeIcon.src = '/images/cup no streak.png';
@@ -264,10 +252,6 @@
             xpFill.classList.toggle('started', totalXP > 0);
 
             document.getElementById('rankIcon').src = currentLevel.iconPath;
-
-            localStorage.setItem('streakDays', streakDays);
-            localStorage.setItem('totalXP', totalXP);
-            localStorage.setItem('lastPlayDate', lastPlayDate);
         }
 
         // ---------- Streak Repair (numbers come from the server, like Home and Shop) ----------
@@ -361,17 +345,20 @@
             try {
                 // The server checks the inventory, removes 1 Streak Repair and restores the streak
                 await api('/streak/repair', { method: 'POST' });
-                repairInfo = readRepairInfo(await JM.me());
             } catch (e) {
                 showToast(e.message, 'info');
                 return;
             }
 
-            localStorage.setItem('repairDate', new Date().toDateString());
+            // Read the streak back from the server rather than assuming it.
+            const me = await JM.me();
+            streakDays  = me.streak ?? 0;
+            totalXP     = me.totalXp ?? 0;
+            activeToday = !!me.activeToday;
+            repairInfo  = readRepairInfo(me);
             updateRepairPill();
 
             animateStreak(restored, function() {
-                streakDays = restored;
                 updateUI();
                 showToast(`Streak restored: ${restored} days`, 'success');
             });
@@ -388,16 +375,6 @@
                     "streak"
                 );
             }
-        }
-
-        async function loadRepairInfo() {
-            try {
-                repairInfo = readRepairInfo(await JM.me());
-            } catch (e) {
-                console.error('Could not load Streak Repair data', e);
-            }
-            updateRepairPill();
-            notifyRepairAvailable();
         }
 
         document.getElementById('repairPill').addEventListener('click', function() {
@@ -426,61 +403,40 @@
         });
 
         // Refresh when the player comes back with the Back button (e.g. after buying in the Shop)
-        window.addEventListener('pageshow', function(e) { if (e.persisted) loadRepairInfo(); });
+        window.addEventListener('pageshow', function(e) { if (e.persisted) loadPlayer(); });
 
-        function checkStreakStatus() {
-            const today = new Date().toDateString();
-
-            if (lastPlayDate === '') {
-                streakDays = 0;
-            } else {
-                const lastDate = new Date(lastPlayDate);
-                const todayDate = new Date();
-                const dayDifference = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
-
-                if (dayDifference === 1 && lastPlayDate !== today) {
-                    // Consecutive day - increment streak
-                    streakDays++;
-                    lastPlayDate = today;
-
-                    // Trigger streak notification
-                    NotificationManager.add(
-                        `Day ${streakDays} streak! You're brewing up some serious Java skills.`,
-                        "☕",
-                        "streak"
-                    );
-
-                    // Award coins for streak
-                    const coinsEarned = 30;
-                    let currentCoins = parseInt(localStorage.getItem('coins')) || 80;
-                    currentCoins += coinsEarned;
-                    localStorage.setItem('coins', currentCoins);
-
-                    // Trigger coins notification
-                    NotificationManager.add(
-                        `You earned ${coinsEarned} coins from today's streak. Spend them wisely!`,
-                        "💰",
-                        "coins"
-                    );
-
-                } else if (dayDifference > 1) {
-                    // Streak broken
-                    streakDays = 0;
+        // The server keeps the streak. Reading it from the API means this page
+        // can never award a streak bonus the server did not award, and can never
+        // show a streak the server has already lost.
+        async function loadPlayer() {
+            try {
+                const me = await JM.me();
+                streakDays  = me.streak ?? 0;
+                totalXP     = me.totalXp ?? 0;
+                activeToday = !!me.activeToday;
+                if (me.rank) {
+                    rankInfo = {
+                        name:  me.rank.name,
+                        minXp: me.rank.minXp ?? 0,
+                        maxXp: me.rank.maxXp ?? 0,
+                        icon:  me.rank.icon || rankInfo.icon
+                    };
                 }
+                repairInfo = readRepairInfo(me);
+            } catch (e) {
+                console.error('Could not load the player from the server', e);
             }
             updateUI();
+            updateRepairPill();
+            notifyRepairAvailable();
         }
 
-        // Listen for coin changes from other tabs/windows
-        // (only runs if coins-sync.js provides loadCoinsDisplay; the sidebar no longer shows coins)
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'coins' && typeof loadCoinsDisplay === 'function') {
-                loadCoinsDisplay();
-            }
+        // Coming back from a lesson should show the numbers the server has now.
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted) loadPlayer();
         });
 
-        checkStreakStatus();
-        loadRepairInfo();
+        loadPlayer();
 
         // Initialize notification badge
         NotificationManager.updateBadge();

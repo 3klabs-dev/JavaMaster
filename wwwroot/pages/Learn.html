@@ -218,9 +218,12 @@
         window.addEventListener('storage', function (e) {
             if (e.key === 'profileAvatar') loadNavbarAvatar();
             if (e.key === 'coins' && typeof loadCoinsDisplay === 'function') loadCoinsDisplay();
-            if (e.key === 'completedLessons' || e.key === 'currentLesson') {
-                loadLessonProgress();
-            }
+        });
+
+        // Coming back from a lesson should show the path the server has now,
+        // not the one that was there when the page was first loaded.
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) loadLessonProgress();
         });
 
         /* ---------- Lesson path ---------- */
@@ -239,52 +242,41 @@
         const nodes  = Array.from(document.querySelectorAll('.lesson-node'));
 
         /*
-          Progress is stored by step number (1-7):
-            currentLesson    -> step the learner is on (default 1)
-            completedLessons -> array of finished steps
-
-          The server is the source of truth, so the browser values are only used
-          as an instant first paint. /api/learn/path then reports which nodes are
-          Completed, Unlocked or Locked and the real state is applied on top.
+          The server owns the learn path. /api/learn/path reports every node as
+          Completed, Unlocked or Locked, and that is the only thing that decides
+          how a node is drawn. Nothing about progress is kept in the browser.
         */
         function loadLessonProgress() {
-            const completed = JSON.parse(localStorage.getItem('completedLessons') || '[]');
-            const current   = parseInt(localStorage.getItem('currentLesson') || '1', 10);
-
-            applyNodeStates(completed, current);
-
             fetch('/api/learn/path')
-                .then(r => r.ok ? r.json() : null)
+                .then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.json();
+                })
                 .then(sections => {
-                    if (!sections) return;
                     const status = {};
                     (sections || []).forEach(s =>
                         (s.nodes || []).forEach(n => { status[n.id] = n.status; }));
-                    if (!Object.keys(status).length) return;
-
-                    const done = [], unlocked = [];
-                    nodes.forEach(node => {
-                        const st = status[node.dataset.nodeId];
-                        if (st === 'Completed') done.push(parseInt(node.dataset.step, 10));
-                        else if (st === 'Unlocked') unlocked.push(parseInt(node.dataset.step, 10));
-                    });
-                    applyNodeStates(done, unlocked.length ? unlocked[0] : current);
+                    applyNodeStates(status);
                 })
-                .catch(() => { /* keep the browser state if the server cannot be reached */ });
+                .catch(err => {
+                    // The server could not be reached, so nothing can be unlocked.
+                    applyNodeStates({});
+                    console.error('Could not load the learn path', err);
+                });
         }
 
-        function applyNodeStates(completed, current) {
+        function applyNodeStates(status) {
             nodes.forEach(node => {
-                const step = parseInt(node.dataset.step, 10);
+                const id  = node.dataset.nodeId;
                 const type = node.dataset.type;
                 const img  = node.querySelector(':scope > img');
 
                 node.classList.remove('locked', 'current', 'completed');
 
                 let state;
-                if (completed.includes(step))      state = 'completed';
-                else if (step === current)         state = 'current';
-                else                               state = 'locked';
+                if (status[id] === 'Completed')      state = 'completed';
+                else if (status[id] === 'Unlocked')  state = 'current';
+                else                                  state = 'locked';
 
                 node.classList.add(state);
                 node.dataset.state = state;
