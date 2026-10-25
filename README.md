@@ -162,6 +162,29 @@ nothing else needs to change.
 
 ---
 
+## Where the data comes from
+
+The server is the only place player progress lives. The pages do not keep a
+copy in the browser.
+
+| Page | Reads | From |
+|---|---|---|
+| Learn | which lessons are open | `GET /api/learn/path` |
+| A lesson | the questions, and the grading | `GET /api/learn/nodes/{id}`, `POST /api/learn/questions/{id}/check` |
+| Progress | XP, coins, streak, rank | `GET /api/me` |
+| Profile | XP, streak, rank | `GET /api/me` |
+| Home, Shop | coins, inventory | `GET /api/me`, `GET /api/shop` |
+
+Finishing a lesson posts to `POST /api/learn/nodes/{id}/complete`. The server
+pays the XP and coins, unlocks the next lesson and records the streak. Nothing
+is written to `localStorage` for any of that.
+
+The browser still keeps a few things of its own, because the server has no
+equivalent yet: the chosen avatar, the name, school and grade on the profile,
+the badge count, and the "repair notified today" flag.
+
+---
+
 ## How a lesson works
 
 1. The lesson page asks the server for its node and questions

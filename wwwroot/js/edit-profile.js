@@ -28,12 +28,16 @@ let joinedDate = localStorage.getItem('joinedDate') || null;
 let bestStreak = parseInt(localStorage.getItem('bestStreak')) || 0;
 let badgeCount = parseInt(localStorage.getItem('badgeCount')) || 0;
 
-// Load progress data
-let streakDays = parseInt(localStorage.getItem('streakDays')) || 0;
-let totalXP = parseInt(localStorage.getItem('totalXP')) || 0;
+// Load progress data. It comes from the server, so the profile can never show
+// an XP or streak number the API disagrees with.
+let streakDays = 0;
+let totalXP = 0;
+let rankInfo = null;
 
 // Current rank name + icon from XP
 function getCurrentRank() {
+    if (rankInfo) return { name: rankInfo.name, iconPath: rankInfo.icon };
+
     const rank = ranks.find(function (r) { return totalXP >= r.min; });
     return {
         name: rank.name,
@@ -201,14 +205,21 @@ document.getElementById('avatarGrid').addEventListener('click', function (e) {
 });
 
 // ===== Start =====
-initializeProfile();
-
-// Refresh when another tab (e.g. Progress) updates streak / XP / badges
-window.addEventListener('storage', function (e) {
-    if (e.key === 'streakDays' || e.key === 'totalXP' || e.key === 'badgeCount') {
-        streakDays = parseInt(localStorage.getItem('streakDays')) || 0;
-        totalXP = parseInt(localStorage.getItem('totalXP')) || 0;
-        badgeCount = parseInt(localStorage.getItem('badgeCount')) || 0;
-        initializeProfile();
+async function loadPlayer() {
+    try {
+        const me = await JM.me();
+        streakDays = me.streak ?? 0;
+        totalXP = me.totalXp ?? 0;
+        if (me.rank) rankInfo = { name: me.rank.name, icon: me.rank.icon };
+    } catch (e) {
+        console.error('Could not load the player from the server', e);
     }
+    initializeProfile();
+}
+
+loadPlayer();
+
+// Refresh when the player comes back with the Back button
+window.addEventListener('pageshow', function (e) {
+    if (e.persisted) loadPlayer();
 });

@@ -40,7 +40,6 @@
     var serverOutput = null;// the output panel, only sent back on a correct answer
     var completion = null;  // the completion payload from the server
     var correcting = false; // true while the learner is fixing a wrong answer
-    var lessonStep = 1;     // this node's position on the Learn path (1-7)
     var fileName = 'Practice';
     var busy = false;
 
@@ -394,32 +393,17 @@
             });
     }
 
-    /* Mirrors the server's answer into the browser keys the rest of the app reads,
-       so the Learn path, Progress and Profile pages stay in step with the server. */
+    /* The server owns the learn path and the player's progress, so nothing is
+       copied into the browser. The only thing kept here is the badge count,
+       which has no server side yet. */
     function syncProgress(res) {
         try {
-            var done = JSON.parse(localStorage.getItem('completedLessons') || '[]');
-            if (done.indexOf(lessonStep) < 0) done.push(lessonStep);
-            localStorage.setItem('completedLessons', JSON.stringify(done));
-
-            var current = parseInt(localStorage.getItem('currentLesson') || '1', 10);
-            if (current <= lessonStep) localStorage.setItem('currentLesson', lessonStep + 1);
-
-            if (res.xpAfter !== undefined) localStorage.setItem('totalXP', res.xpAfter);
-            if (res.coinsTotal !== undefined) localStorage.setItem('coins', res.coinsTotal);
-            if (res.streak !== undefined) localStorage.setItem('streakDays', res.streak);
-            localStorage.setItem('lastPlayDate', phToday());
-
-            var badges = parseInt(localStorage.getItem('badges') || '0') || 0;
             if (res.xpEarned > 0) {
+                var badges = parseInt(localStorage.getItem('badges') || '0') || 0;
                 localStorage.setItem('badges', badges + 1);
                 localStorage.setItem('pendingBadge', '1');
             }
         } catch (e) { }
-    }
-
-    function phToday() {
-        return new Date(Date.now() + 8 * 3600 * 1000).toDateString();
     }
 
     var claimed = false;
@@ -582,19 +566,9 @@
                 return { path: path, node: nodeData };
             });
         }).then(function (res) {
-            var path = res.path, nodeData = res.node;
+            var nodeData = res.node;
             node = nodeData;
             questions = nodeData.questions || [];
-
-            // Work out where this node sits on the Learn path so the browser can
-            // keep the other pages in step with the server.
-            var step = 0;
-            (path || []).forEach(function (s) {
-                (s.nodes || []).forEach(function (n) {
-                    step++;
-                    if (n.id === NODE_ID) lessonStep = step;
-                });
-            });
 
             var q = questions[0];
             if (q) slotOrder = slotsOf(payloadOf(q));
