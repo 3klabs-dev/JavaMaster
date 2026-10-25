@@ -382,7 +382,6 @@
                 busy = false;
                 completion = res;
                 screen = 'done';
-                syncProgress(res);
                 render();
             })
             .catch(function (err) {
@@ -393,18 +392,7 @@
             });
     }
 
-    /* The server owns the learn path and the player's progress, so nothing is
-       copied into the browser. The only thing kept here is the badge count,
-       which has no server side yet. */
-    function syncProgress(res) {
-        try {
-            if (res.xpEarned > 0) {
-                var badges = parseInt(localStorage.getItem('badges') || '0') || 0;
-                localStorage.setItem('badges', badges + 1);
-                localStorage.setItem('pendingBadge', '1');
-            }
-        } catch (e) { }
-    }
+
 
     var claimed = false;
     function getReward() {
@@ -419,7 +407,9 @@
             var r = b.getBoundingClientRect();
             coinBurst(r.left + r.width / 2, r.top + r.height / 2);
         }
-        setTimeout(function () { location.href = '/pages/Learn.html'; }, 2300);
+        // The Learn page shows the "+1 Badge" toast when it is told a badge was earned.
+        var target = (completion && completion.badgeEarned) ? '/pages/Learn.html?badge=1' : '/pages/Learn.html';
+        setTimeout(function () { location.href = target; }, 2300);
     }
 
     /* -------------------------------------------------------- coin burst */

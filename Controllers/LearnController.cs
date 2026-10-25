@@ -189,6 +189,15 @@ public class LearnController : ControllerBase
 
         var streakBonus = StreakService.RecordActivity(user);
 
+        // A badge is earned the first time a lesson is finished, and only then.
+        var alreadyHadBadge = await _db.UserBadges
+            .AnyAsync(x => x.UserId == user.Id && x.LearnNodeId == nodeId);
+        var badgeEarned = false;
+        if (firstTime && !alreadyHadBadge)
+        {
+            _db.UserBadges.Add(new UserBadge { UserId = user.Id, LearnNodeId = nodeId });
+            badgeEarned = true;
+        }
         if (progress == null)
         {
             progress = new UserNodeProgress { UserId = user.Id, LearnNodeId = nodeId };
@@ -207,6 +216,7 @@ public class LearnController : ControllerBase
             rankIcon = "/rank titles/" + rankAfter.IconFile,
             rankMinXp = rankAfter.RankMinXp, rankMaxXp = rankAfter.RankMaxXp,
             coinsEarned = coins, streakBonus, coinsTotal = user.Coins,
+            badgeEarned,
             streak = user.CurrentStreak,
             nextNodeId = next?.Id,
             outroText = node.OutroText

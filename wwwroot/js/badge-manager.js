@@ -1,8 +1,8 @@
 /* ============================================================
    badge-manager.js
-   - Profile page: fills #badgeCount from localStorage 'badges'
+   - Profile page: fills #badgeCount from the server
    - Learn page:   shows the "+1 Badge" toast after a lesson was
-                   completed (flag 'pendingBadge' set by the lesson)
+                    completed (the lesson page links back with ?badge=1)
    Include with: <script src="/js/badge-manager.js"></script>
    ============================================================ */
 (function () {
@@ -10,19 +10,26 @@
 
     var BADGE_ICON = '/icons/badge.png';
 
-    function read(key) {
-        try { return localStorage.getItem(key); } catch (e) { return null; }
-    }
-
     /* ---------- Profile: badge count ---------- */
     function updateBadgeCount() {
         var el = document.getElementById('badgeCount');
-        if (el) el.textContent = parseInt(read('badges'), 10) || 0;
+        if (!el) return;
+
+        var load = (typeof api === 'function')
+            ? api('/me')
+            : fetch('/api/me').then(function (r) { return r.json(); });
+
+        load.then(function (me) {
+            if (me && typeof me.badges === 'number') el.textContent = me.badges;
+        }).catch(function (e) {
+            console.error('Could not load the badge count', e);
+        });
     }
 
     /* ---------- Learn: "+1 Badge" toast ---------- */
     function injectStyles() {
         if (document.getElementById('badgeToastStyles')) return;
+
         var css = [
             '.badge-toast {',
             '    position: fixed;',
@@ -94,8 +101,16 @@
 
     function checkPendingBadge() {
         if (!document.getElementById('lessonPath')) return;   // Learn page only
-        if (!read('pendingBadge')) return;
-        try { localStorage.removeItem('pendingBadge'); } catch (e) {}
+
+        // The lesson page links back here with ?badge=1 when a badge was earned.
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('badge') !== '1') return;
+
+        // Take the flag out of the address so a refresh does not show it again.
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+
         setTimeout(showBadgeToast, 600);
     }
 
@@ -103,9 +118,5 @@
     window.addEventListener('load', function () {
         updateBadgeCount();
         checkPendingBadge();
-    });
-
-    window.addEventListener('storage', function (e) {
-        if (e.key === 'badges') updateBadgeCount();
     });
 })();

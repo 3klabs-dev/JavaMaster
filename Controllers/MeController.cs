@@ -26,6 +26,9 @@ public class MeController : ControllerBase
             .ToListAsync();
         var repairs = inventory.FirstOrDefault(i => i.Code == "STREAK_REPAIR")?.Quantity ?? 0;
 
+        // Badges earned by finishing lessons for the first time
+        var badges = await _db.UserBadges.CountAsync(x => x.UserId == user.Id);
+
         // Streak days are counted in Philippine time (UTC+8)
         var today = StreakService.Today();
         var last = user.LastActivityDate;
@@ -53,7 +56,8 @@ public class MeController : ControllerBase
             missedDays,                                            // 0 = fine, 1 = repairable, 2+ = too late
             lostStreak = missedDays > 0 ? user.CurrentStreak : 0,  // the "14" in "Repair 14-day streak"
             canRepairStreak = missedDays == 1 && repairs > 0,      // missed exactly one day AND owns 1+
-            inventory = inventory.ToDictionary(x => x.Code, x => x.Quantity)
+            inventory = inventory.ToDictionary(x => x.Code, x => x.Quantity),
+            badges
         });
     }
 }

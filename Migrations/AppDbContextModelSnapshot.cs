@@ -393,6 +393,33 @@ namespace JavaMaster.Api.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("JavaMaster.Api.Entities.UserBadge", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("EarnedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("LearnNodeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LearnNodeId");
+
+                    b.HasIndex("UserId", "LearnNodeId")
+                        .IsUnique();
+
+                    b.ToTable("UserBadges");
+                });
+
             modelBuilder.Entity("JavaMaster.Api.Entities.UserDailyChallenge", b =>
                 {
                     b.Property<int>("UserId")
@@ -501,6 +528,25 @@ namespace JavaMaster.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Topic");
+                });
+
+            modelBuilder.Entity("JavaMaster.Api.Entities.UserBadge", b =>
+                {
+                    b.HasOne("JavaMaster.Api.Entities.LearnNode", "LearnNode")
+                        .WithMany()
+                        .HasForeignKey("LearnNodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("JavaMaster.Api.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LearnNode");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("JavaMaster.Api.Entities.UserInventory", b =>
