@@ -520,8 +520,11 @@
         padding-top: 0;
     }
 
-    /* The finish screen is a piece of reading, so it is justified. */
+    /* The finish screen is a piece of reading, so it is justified. The line
+       is kept short, because a justified line that runs the width of the
+       column is hard to read. */
     .text.finish {
+        width: min(480px, 86vw);
         text-align: justify;
     }
 

@@ -182,17 +182,17 @@
         var b = $('bubbles');
         b.innerHTML = '';
         var m = $('model');
-        var over = screen === 'done' || screen === 'finish';
         m.style.display = screen === 'done' ? 'none' : 'block';
         var img = MODEL.stand;
 
-        $('topBar').style.display = over ? 'none' : 'flex';
+        $('topBar').style.display = screen === 'done' ? 'none' : 'flex';
         $('progress').style.display = screen === 'question' ? 'flex' : 'none';
 
         // The finished screen has no top bar and no progress dots, so the
         // room they needed at the top is given back and the panel can sit in
-        // the middle of the screen.
-        st.classList.toggle('center', over);
+        // the middle of the screen. The finish screen keeps the top bar, so
+        // the learner can still go back.
+        st.classList.toggle('center', screen === 'done');
 
         if (screen === 'question') {
             $('progress').innerHTML = questions.map(function (_, i) {
