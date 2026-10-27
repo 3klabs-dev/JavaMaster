@@ -40,7 +40,6 @@
     var serverOutput = null;// the output panel, only sent back on a correct answer
     var completion = null;  // the completion payload from the server
     var correcting = false; // true while the learner is fixing a wrong answer
-    var fileName = 'Practice';
     var busy = false;
 
     /* ------------------------------------------------------------- helpers */
@@ -154,9 +153,13 @@
             // The input is wired up with a real event listener in render(), not an
             // inline handler: an inline handler would assign to the global scope
             // and the value would never reach this module.
+            // The answer has to be typed, so the clipboard and the context menu
+            // are closed off on this field.
             return '<span class="chip in">' + esc(pre) +
                 '<input id="tin" ' + (phase === 'answer' ? '' : 'readonly') +
-                ' value="' + esc(typed) + '" autocomplete="off" spellcheck="false">' + esc(post) + '</span>';
+                ' value="' + esc(typed) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"' +
+                ' onpaste="return false" ondrop="return false" oncopy="return false" oncut="return false" oncontextmenu="return false">' +
+                esc(post) + '</span>';
         }).join('');
     }
 
@@ -165,9 +168,10 @@
             ? '<div class="output"><div>Output</div><div>' + esc(serverOutput) + '</div></div>'
             : '';
         var tl = (tools && phase === 'answer')
-            ? '<div class="tools"><button data-action="rem">⌫ Remove</button><button data-action="reset">↺ Reset</button></div>'
+            ? '<div class="tools"><button data-action="rem"><img src="/icons/remove.png" alt="">Remove</button>' +
+              '<button data-action="reset"><img src="/icons/reset.png" alt="">Reset</button></div>'
             : (tools ? '<div class="tools"></div>' : '');
-        return '<div class="work"><div class="editor"><div class="tab">☕ ' + esc(fileName) + '.java</div>' +
+        return '<div class="work"><div class="editor"><div class="tab"><img src="/icons/small size java logo.png" alt="">Main.java</div>' +
             '<div class="code">' + inner + '</div>' + tl + '</div>' + out + '</div>';
     }
 
@@ -255,12 +259,20 @@
     function renderDone() {
         var c = completion || {};
         var first = c.xpEarned > 0 || c.coinsEarned > 0;
+        var title = (node && node.title) || 'the lesson';
+
+        // A short line says what just happened. The reward panel below it
+        // still shows what the lesson paid, so the line stays short.
+        var desc = first
+            ? 'Great job! You finished ' + title + '. The next lesson is now unlocked.'
+            : 'Nice review! You finished ' + title + '.';
 
         // The left half is the player's standing - the rank they hold and the
         // XP they have collected - and the right half is what this lesson paid
         // them. The two are different numbers, so the panel does not show the
         // same one twice.
-        $('stage').innerHTML = '<div class="done"><img src="/icons/victory.png" alt="victory"><h1>COMPLETED!</h1>' +
+        $('stage').innerHTML = '<div class="done"><img src="/icons/done.png" alt=""><h1>COMPLETED!</h1>' +
+            '<p class="done-desc">' + esc(desc) + '</p>' +
             '<div class="rew"><div class="l"><b id="rankName">' + esc(c.rankBefore || 'Starter') + '</b>' +
             '<b id="xpNum">' + (c.xpBefore || 0) + '</b>' +
             '<b>Coins</b><b>+' + (c.coinsEarned || 0) + '</b></div>' +
@@ -600,7 +612,6 @@
             var q = questions[0];
             if (q) slotOrder = slotsOf(payloadOf(q));
 
-            fileName = nodeData.title || 'Practice';
             render();
         }).catch(function (err) {
             var m = $('model');
