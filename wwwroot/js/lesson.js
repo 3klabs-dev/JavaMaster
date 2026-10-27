@@ -153,8 +153,9 @@
             // The input is wired up with a real event listener in render(), not an
             // inline handler: an inline handler would assign to the global scope
             // and the value would never reach this module.
-            // The answer has to be typed, so the clipboard and the context menu
-            // are closed off on this field.
+            // Every typed answer goes through here, in every lesson, so this is
+            // where the clipboard is closed off: the answer is usually in the
+            // question text, so the field must not accept a paste of it.
             return '<span class="chip in">' + esc(pre) +
                 '<input id="tin" ' + (phase === 'answer' ? '' : 'readonly') +
                 ' value="' + esc(typed) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"' +
