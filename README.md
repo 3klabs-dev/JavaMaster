@@ -240,6 +240,14 @@ codes `daily.q1` to `daily.q5`, and they are only ever inserted once.
 4. When all five questions are answered correctly the page asks the server to
    complete the node (`POST /api/learn/nodes/{id}/complete`). The server pays
    the XP and coins, unlocks the next lesson, and records the streak.
+5. The **finish screen** says the lesson is done and what comes next. It shows
+   the lesson's own closing text, which the database owns.
+6. The **completed screen** is the plain one: the icon, the heading and a
+   **Continue** button.
+
+The finish screen only happens the first time. The server says so in the
+completion payload (`firstTime`), and a replay skips it and goes straight to
+the completed screen.
 
 A lesson can only be rewarded once. Replaying it still means answering every
 question again, but it pays no XP and no coins, so nobody can farm a lesson.
