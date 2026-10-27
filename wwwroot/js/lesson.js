@@ -265,7 +265,10 @@
     // replay goes straight to the completed screen.
     function renderFinish() {
         var c = completion || {};
-        var title = (node && node.title) || 'the lesson';
+
+        // The name comes from the server's own record of what was just
+        // completed, so it can never disagree with the lesson that was played.
+        var title = c.title || (node && node.title) || 'the lesson';
 
         // The first line says the lesson is done and the next one is open.
         // The rest is the lesson's own closing text, which the server owns.
@@ -281,19 +284,52 @@
     function renderDone() {
         var c = completion || {};
 
-        // The completed screen is the plain one: the icon, the heading and a
-        // way out. The "great job" line was already said on the finish screen,
-        // so a line only appears here when the lesson was a replay and there
-        // was no finish screen to say it on.
-        var desc = c.firstTime ? '' :
-            '<p class="done-desc">Nice review! Rewards can only be earned once per lesson.</p>';
+        // A lesson that is played for the first time shows what it paid, so
+        // the learner can claim the reward. A replay has nothing left to
+        // claim, so it gets the plain screen with the closing line instead.
+        var first = c.firstTime;
 
-        $('stage').innerHTML = '<div class="done"><img src="/icons/done.png" alt=""><h1>COMPLETED!</h1>' +
-            desc +
-            '<button class="rbtn" id="rewardBtn">Continue</button></div>';
+        var body = first
+            ? '<div class="rew"><div class="l"><b id="rankName">' + esc(c.rankBefore || 'Starter') + '</b>' +
+              '<b id="xpNum">' + (c.xpBefore || 0) + '</b>' +
+              '<b>Coins</b><b>+' + (c.coinsEarned || 0) + '</b></div>' +
+              '<div class="earn">EARNED<div>' + (c.xpEarned || 0) + ' XP</div></div></div>'
+            : '<p class="done-desc">Nice review! Rewards can only be earned once per lesson.</p>';
+
+        $('stage').innerHTML = '<div class="done">' +
+            '<img src="/icons/' + (first ? 'victory.png' : 'done.png') + '" alt="">' +
+            '<h1>COMPLETED!</h1>' + body +
+            '<button class="rbtn" id="rewardBtn">' + (first ? 'Get Reward' : 'Continue') + '</button></div>';
         $('bubbles').innerHTML = '';
         $('bgMusic').pause();
         sfx('completedSound');
+
+        if (!first) return;
+
+        // The XP counts up to the new total, and the rank name changes once it
+        // has landed.
+        countUp($('xpNum'), c.xpBefore || 0, c.xpAfter || 0, 1200);
+        setTimeout(function () {
+            var r = $('rankName');
+            if (r) r.textContent = c.rankAfter || 'Starter';
+        }, 1250);
+    }
+
+    // Counts a number up from one value to another.
+    function countUp(el, from, to, d) {
+        if (!el) return;
+        // Someone who asked for less motion gets the number straight away.
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            el.textContent = to;
+            return;
+        }
+        var t0 = performance.now();
+        (function f(n) {
+            var t = Math.min((n - t0) / d, 1);
+            var e = 1 - Math.pow(1 - t, 3);
+            el.textContent = Math.round(from + (to - from) * e);
+            if (t < 1) requestAnimationFrame(f);
+        })(t0);
     }
 
     /* ----------------------------------------------------------- answering */
