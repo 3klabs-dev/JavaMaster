@@ -482,6 +482,11 @@
     }
 
     /* ---------- Completed screen ---------- */
+
+    /* The top bar and the progress dots are gone by the time the lesson is
+       finished, so the space they needed is given back. Without this the
+       panel sits low, because it is centred inside the space the top bar
+       used to take. */
     #stage.center {
         padding-top: 0;
     }
@@ -493,7 +498,12 @@
         text-align: center;
         padding-top: 0;
         justify-content: center;
-        height: 100%;
+
+        /* The height grows with the content instead of being pinned to the
+           screen, so a short screen scrolls to the top of the panel instead of
+           cutting it off. */
+        height: auto;
+        min-height: 100%;
     }
 
     .done img {
@@ -506,10 +516,15 @@
         margin-bottom: 26px;
     }
 
+    /* The reward panel sits on the same column as the prompt, the options and
+       the code editor, so the lesson keeps one width from the first question
+       to the last screen. */
     .rew {
         display: flex;
         gap: 70px;
         align-items: center;
+        justify-content: center;
+        width: var(--content-w);
         margin-bottom: 34px;
         font-weight: 600;
         font-size: 20px;
@@ -519,7 +534,7 @@
     .rew .l {
         display: grid;
         grid-template-columns: auto auto;
-        gap: 6px 150px;
+        gap: 6px 28px;
         text-align: left;
     }
 
@@ -546,7 +561,7 @@
     }
 
     .rbtn {
-        width: 306px;
+        width: min(306px, 88vw);
         padding: 20px;
         border: none;
         border-radius: 14px;
@@ -559,6 +574,19 @@
     .rbtn.claimed {
         background: #432da3;
         cursor: default;
+    }
+
+    /* On a narrow screen the two halves of the panel stack instead of
+       sitting side by side. */
+    @media (max-width: 600px) {
+        .rew {
+            gap: 26px;
+            flex-direction: column;
+        }
+
+        .rew .l {
+            gap: 6px 40px;
+        }
     }
 
     /* ---------- Gold coin canvas ---------- */

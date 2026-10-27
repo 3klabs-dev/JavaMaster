@@ -182,6 +182,12 @@
 
         $('topBar').style.display = screen === 'done' ? 'none' : 'flex';
         $('progress').style.display = screen === 'question' ? 'flex' : 'none';
+
+        // The finished screen has no top bar and no progress dots, so the
+        // room they needed at the top is given back and the panel can sit in
+        // the middle of the screen.
+        st.classList.toggle('center', screen === 'done');
+
         if (screen === 'question') {
             $('progress').innerHTML = questions.map(function (_, i) {
                 return '<i class="' + (i <= qIndex ? 'on' : '') + '"></i>';
@@ -249,8 +255,14 @@
     function renderDone() {
         var c = completion || {};
         var first = c.xpEarned > 0 || c.coinsEarned > 0;
+
+        // The left half is the player's standing - the rank they hold and the
+        // XP they have collected - and the right half is what this lesson paid
+        // them. The two are different numbers, so the panel does not show the
+        // same one twice.
         $('stage').innerHTML = '<div class="done"><img src="/icons/victory.png" alt="victory"><h1>COMPLETED!</h1>' +
-            '<div class="rew"><div class="l"><b>' + esc(c.rankAfter || 'Starter') + '</b><b id="xpNum">' + (c.xpEarned || 0) + '</b>' +
+            '<div class="rew"><div class="l"><b id="rankName">' + esc(c.rankBefore || 'Starter') + '</b>' +
+            '<b id="xpNum">' + (c.xpBefore || 0) + '</b>' +
             '<b>Coins</b><b>+' + (c.coinsEarned || 0) + '</b></div>' +
             '<div class="earn">EARNED<div>' + (c.xpEarned || 0) + ' XP</div></div></div>' +
             (first ? '' : '<p class="replay-note">Lesson already completed. Rewards can only be earned once.</p>') +
@@ -258,6 +270,31 @@
         $('bubbles').innerHTML = '';
         $('bgMusic').pause();
         sfx('completedSound');
+
+        // The XP counts up to the new total, and the rank name changes once it
+        // has landed.
+        countUp($('xpNum'), c.xpBefore || 0, c.xpAfter || 0, 1200);
+        setTimeout(function () {
+            var r = $('rankName');
+            if (r) r.textContent = c.rankAfter || 'Starter';
+        }, 1250);
+    }
+
+    // Counts a number up from one value to another.
+    function countUp(el, from, to, d) {
+        if (!el) return;
+        // Someone who asked for less motion gets the number straight away.
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            el.textContent = to;
+            return;
+        }
+        var t0 = performance.now();
+        (function f(n) {
+            var t = Math.min((n - t0) / d, 1);
+            var e = 1 - Math.pow(1 - t, 3);
+            el.textContent = Math.round(from + (to - from) * e);
+            if (t < 1) requestAnimationFrame(f);
+        })(t0);
     }
 
     /* ----------------------------------------------------------- answering */

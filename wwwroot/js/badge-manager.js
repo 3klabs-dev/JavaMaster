@@ -95,7 +95,12 @@
             setTimeout(function () { toast.remove(); }, 450);
         }
         toast.querySelector('.bt-close').addEventListener('click', close);
-        requestAnimationFrame(function () { toast.classList.add('show'); });
+        // Reading the size makes the browser notice the element, so the
+        // fade-in runs when the class goes on. This does not rely on an
+        // animation frame, which a browser holds back in a tab that is not
+        // being looked at.
+        void toast.offsetWidth;
+        toast.classList.add('show');
         setTimeout(close, 6000);
     }
 
