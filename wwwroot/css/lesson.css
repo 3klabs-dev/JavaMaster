@@ -562,6 +562,44 @@
         color: #d9b78f;
     }
 
+    /* The reward panel sits on the same column as the prompt, the options and
+       the code editor, so the lesson keeps one width from the first question
+       to the last screen. */
+    .rew {
+        display: flex;
+        gap: 70px;
+        align-items: center;
+        justify-content: center;
+        width: var(--content-w);
+        margin-bottom: 34px;
+        font-weight: 600;
+        font-size: 20px;
+        color: #d9b78f;
+    }
+
+    .rew .l {
+        display: grid;
+        grid-template-columns: auto auto;
+        gap: 6px 28px;
+        text-align: left;
+    }
+
+    .rew .l b:nth-child(even) {
+        text-align: right;
+    }
+
+    .earn {
+        text-align: center;
+        color: #f3e6d8;
+        font-size: 19px;
+    }
+
+    .earn div {
+        color: #f59e0b;
+        font-size: 30px;
+        font-weight: 700;
+    }
+
     .rbtn {
         width: min(306px, 88vw);
         padding: 20px;
@@ -578,10 +616,17 @@
         cursor: default;
     }
 
-    /* With no line under the heading, the button takes the room the line
-       would have taken. */
-    .done h1+.rbtn {
-        margin-top: 34px;
+    /* On a narrow screen the two halves of the panel stack instead of
+       sitting side by side. */
+    @media (max-width: 600px) {
+        .rew {
+            gap: 26px;
+            flex-direction: column;
+        }
+
+        .rew .l {
+            gap: 6px 40px;
+        }
     }
 
     /* ---------- Gold coin canvas ---------- */

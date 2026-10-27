@@ -219,6 +219,7 @@ public class LearnController : ControllerBase
             rankMinXp = rankAfter.RankMinXp, rankMaxXp = rankAfter.RankMaxXp,
             coinsEarned = coins, streakBonus, coinsTotal = user.Coins,
             badgeEarned, firstTime,
+            title = node.Title,
             streak = user.CurrentStreak,
             nextNodeId = next?.Id,
             outroText = node.OutroText
