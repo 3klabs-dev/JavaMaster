@@ -217,6 +217,29 @@ Two things to know:
   app, or written straight into the database, have no code and are never
   touched by the seeder.
 
+### Changing content that is already in the database
+
+Because the seeder is insert-only, editing `Data/LessonContent.cs` only changes
+what a **fresh** install gets. A database that already has the question keeps
+the wording and the answer key it has.
+
+To carry a content change into the databases that already exist, add a
+migration that patches the rows by their code:
+
+```csharp
+migrationBuilder.Sql(
+    "UPDATE Questions SET Explanation = {0} WHERE Code = {1}",
+    "The new explanation.", "variables.q2");
+```
+
+The `FixCaseSensitiveAnswers` migration is the worked example: it changed how a
+typed answer is compared and rewrote the corrections that go with it. Because
+the app applies migrations on start-up, the change lands the next time it
+runs — and `dotnet ef database update` does it on demand.
+
+Only patch the questions that carry a known code. A question a professor added
+by hand has no code and must not be touched.
+
 The lesson text (`IntroText` and `OutroText` on a learn node) works the same
 way: the code fills it in while it is empty, and after that the database owns
 it.
@@ -271,6 +294,32 @@ Both of those live in the shared lesson engine (`wwwroot/js/lesson.js`), not in
 one lesson, so **every** lesson gets them — including the lessons added later.
 Any new question that renders a text field must go through the same engine, or
 it will not be protected.
+
+### How an answer is compared
+
+Java is a case-sensitive language, so a typed answer is compared **exactly**:
+`DOUBLE` is not `double`, and `hello world!` is not `Hello World!`. A learner
+who writes a Java keyword in the wrong case gets the answer wrong, and the
+correction they see says so.
+
+The rule lives in `Services/AnswerChecker.cs` and applies to every answer type
+that carries text — a typed answer, a filled slot and an arranged token:
+
+| In the answer key | What happens |
+|---|---|
+| nothing, or `"caseSensitive": true` | compared exactly (the default) |
+| `"caseSensitive": false` | compared without regard to case |
+
+A missing flag means the strict default, so a question that is added without
+one still gets Java's rule. A flag that is not a real boolean is ignored
+rather than read, so a broken flag can never turn a question into one that can
+never be answered.
+
+Only one question opts out: the `long` suffix, where Java accepts both `L` and
+`l`. Every other Java keyword has to be spelled exactly as Java writes it.
+
+Whitespace around a typed answer is ignored, so `"  double  "` is the same as
+`"double"`.
 
 ---
 

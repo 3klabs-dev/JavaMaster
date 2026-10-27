@@ -31,11 +31,28 @@ public static class AnswerChecker
     private static bool Choice(JsonElement key, JsonElement a) =>
         a.GetProperty("optionId").GetString() == key.GetProperty("correctOptionId").GetString();
 
+    /// <summary>
+    /// Java is a case-sensitive language, so an answer is compared exactly -
+    /// DOUBLE is not double - unless the question asks for something else.
+    ///
+    /// A question opts out of that with "caseSensitive": false, which the long
+    /// suffix question does, because Java accepts both L and l.
+    ///
+    /// A missing flag means the strict default, and a flag that is not a real
+    /// boolean is ignored rather than read. A broken flag must never turn a
+    /// question into one that can never be answered.
+    /// </summary>
+    private static bool IsCaseSensitive(JsonElement key)
+    {
+        if (!key.TryGetProperty("caseSensitive", out var flag)) return true;   // the strict default
+        if (flag.ValueKind == JsonValueKind.False) return false;              // the explicit opt-out
+        return true;
+    }
+
     private static bool Text(JsonElement key, JsonElement a)
     {
         var text = a.GetProperty("text").GetString()?.Trim() ?? "";
-        var exact = key.TryGetProperty("caseSensitive", out var cs) && cs.GetBoolean();
-        var cmp = exact ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+        var cmp = IsCaseSensitive(key) ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
         return key.GetProperty("accepted").EnumerateArray()
                   .Any(x => string.Equals(x.GetString()?.Trim(), text, cmp));
     }
@@ -44,7 +61,9 @@ public static class AnswerChecker
     {
         var given = a.GetProperty("order").EnumerateArray().Select(x => x.GetString()).ToList();
         var expected = key.GetProperty("order").EnumerateArray().Select(x => x.GetString()).ToList();
-        return given.SequenceEqual(expected);
+        if (given.Count != expected.Count) return false;
+        if (IsCaseSensitive(key)) return given.SequenceEqual(expected);
+        return given.Zip(expected).All(p => string.Equals(p.First, p.Second, StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool Line(JsonElement key, JsonElement a) =>
@@ -53,8 +72,10 @@ public static class AnswerChecker
     private static bool Slots(JsonElement key, JsonElement a)
     {
         var given = a.GetProperty("slots");
+        var cmp = IsCaseSensitive(key) ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
         foreach (var slot in key.GetProperty("slots").EnumerateObject())
-            if (!given.TryGetProperty(slot.Name, out var v) || v.GetString() != slot.Value.GetString())
+            if (!given.TryGetProperty(slot.Name, out var v) ||
+                !string.Equals(v.GetString(), slot.Value.GetString(), cmp))
                 return false;
         return true;
     }
