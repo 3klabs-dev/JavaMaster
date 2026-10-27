@@ -156,6 +156,9 @@ namespace JavaMaster.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("CodeSnippet")
                         .HasColumnType("nvarchar(max)");
 
@@ -196,6 +199,10 @@ namespace JavaMaster.Api.Migrations
                         .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("[Code] IS NOT NULL");
 
                     b.HasIndex("TopicId");
 

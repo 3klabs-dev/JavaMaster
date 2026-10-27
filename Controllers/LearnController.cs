@@ -31,7 +31,7 @@ public class LearnController : ControllerBase
         var previous = -1;
         for (var p = i - 1; p >= 0; p--)
         {
-            if (await _db.NodeQuestions.AnyAsync(nq => nq.LearnNodeId == all[p].Id)) { previous = p; break; }
+            if (await _db.NodeQuestions.AnyAsync(nq => nq.LearnNodeId == all[p].Id && nq.Question!.IsActive)) { previous = p; break; }
         }
 
         var unlocked = i == 0 || previous < 0 || await _db.UserNodeProgress.AnyAsync(p =>
@@ -62,7 +62,9 @@ public class LearnController : ControllerBase
         // Nodes that have no questions yet are placeholders. They must not block
         // the node after them, otherwise an unfinished placeholder would lock the
         // rest of the path for good.
-        var withQuestions = await _db.NodeQuestions.Select(nq => nq.LearnNodeId).Distinct().ToListAsync();
+        var withQuestions = await _db.NodeQuestions
+            .Where(nq => nq.Question!.IsActive)
+            .Select(nq => nq.LearnNodeId).Distinct().ToListAsync();
 
         var prevDone = true;   // the very first node starts unlocked
         var output = new List<object>();
@@ -91,7 +93,7 @@ public class LearnController : ControllerBase
 
         // AnswerKey, Explanation and Hint are never selected here.
         var questions = await _db.NodeQuestions
-            .Where(nq => nq.LearnNodeId == nodeId)
+            .Where(nq => nq.LearnNodeId == nodeId && nq.Question!.IsActive)
             .OrderBy(nq => nq.SortOrder)
             .Select(nq => new
             {
@@ -158,7 +160,7 @@ public class LearnController : ControllerBase
         if (!unlocked) return StatusCode(403, new { error = "This node is locked." });
 
         var questionIds = await _db.NodeQuestions
-            .Where(nq => nq.LearnNodeId == nodeId).Select(nq => nq.QuestionId).ToListAsync();
+            .Where(nq => nq.LearnNodeId == nodeId && nq.Question!.IsActive).Select(nq => nq.QuestionId).ToListAsync();
         if (questionIds.Count == 0)
             return BadRequest(new { error = "This node has no questions yet." });
 

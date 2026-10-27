@@ -185,6 +185,47 @@ the badge count, and the "repair notified today" flag.
 
 ---
 
+## Who owns the lesson content
+
+The lesson questions live in the database. The code in `Data/LessonContent.cs`
+is only the **starting point** — it is what the app puts in the database the
+first time it runs, and nothing more.
+
+Each seeded question carries a `Code` (`hello-world.q1`, `variables.q3`, and so
+on). That code is the stable key that lets the app tell two situations apart:
+
+- **The question is not in the database yet** → insert it, with the code-defined
+  text and the code-defined answer key.
+- **The question is already in the database** → leave it alone. The text, the
+  answer key, the hint and the explanation are all left exactly as they are.
+
+So the app starts once and writes the content in. After that, the database is
+the source of truth, and the code never overwrites it again.
+
+That means a professor can rewrite a question — the wording, the options, the
+answer key, the praise message — and it stays that way across restarts. There
+is no need to keep editing `LessonContent.cs` to change what learners see.
+
+Two things to know:
+
+- **Deleting a question brings it back.** If a row with a known `Code` is
+  deleted, the next start re-inserts it from the code. To take a question out
+  of circulation without losing it, set `IsActive = 0` on it. The API only
+  serves active questions, so the question disappears from the lesson and the
+  rest of the path carries on.
+- **A question with no `Code` is yours.** Questions added by hand through the
+  app, or written straight into the database, have no code and are never
+  touched by the seeder.
+
+The lesson text (`IntroText` and `OutroText` on a learn node) works the same
+way: the code fills it in while it is empty, and after that the database owns
+it.
+
+The daily challenge pool works the same way too. Its five questions carry the
+codes `daily.q1` to `daily.q5`, and they are only ever inserted once.
+
+---
+
 ## How a lesson works
 
 1. The lesson page asks the server for its node and questions
@@ -239,12 +280,12 @@ Controllers/          the API
   ShopController.cs     buying items
   StreakController.cs   repairing a broken streak
   TopicsController.cs
-  WeatherForecastController.cs   leftover from the template, safe to delete
 
 Data/
   AppDbContext.cs       the EF Core model
   DbSeeder.cs           ranks, shop items, daily questions
-  LessonContent.cs      the lesson questions, the single source of truth
+  LessonContent.cs      the starting lesson content, seeded once and then
+                         left alone - the database owns it after that
   Entities/             one file per table
   Migrations/           EF Core migrations
 

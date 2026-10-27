@@ -48,39 +48,61 @@ public static class DbSeeder
         foreach (var u in usersWithoutKit)
             await StartingKit.GiveAsync(db, u);
 
-        // 4. Daily challenge pool (runs once)
-        if (!await db.Questions.AnyAsync(q => q.Purpose == QuestionPurpose.Daily))
+        // 4. Daily challenge pool
+        //    Insert only. The code puts these in the database once and then leaves
+        //    them alone, so a professor can edit or retire a daily question without
+        //    the next start putting the old wording back.
+        var dailyDefs = new[]
         {
-            var dailyTopic = await db.Topics.FirstOrDefaultAsync(t => t.Title == "Daily Challenge")
-                             ?? new Topic { Title = "Daily Challenge" };
+            (Code: "daily.q1",
+             Prompt: "What data type is used to store a single 16-bit Unicode character?",
+             Options: new[] { "String", "char", "int", "byte" }, Correct: 1,
+             Explanation: "The char data type stores a single 16-bit Unicode character. Unlike String, which stores many characters, char holds exactly one."),
+            (Code: "daily.q2",
+             Prompt: "What is the default value of a boolean variable in a class?",
+             Options: new[] { "true", "false", "null", "0" }, Correct: 1,
+             Explanation: "The default value of a boolean declared in a class is false. It is assigned automatically if you give no initial value."),
+            (Code: "daily.q3",
+             Prompt: "What package must be imported to use the Scanner class?",
+             Options: new[] { "java.io.*", "java.input.*", "java.scanner.*", "java.util.*" }, Correct: 3,
+             Explanation: "Scanner is part of the java.util package. Import java.util.* or java.util.Scanner to use it."),
+            (Code: "daily.q4",
+             Prompt: "Which control statement is used to execute one block from many choices?",
+             Options: new[] { "if", "switch", "loop", "select" }, Correct: 1,
+             Explanation: "The switch statement runs one block of code out of many choices, based on the value of a variable."),
+            (Code: "daily.q5",
+             Prompt: "How do you create an array of integers with 5 elements?",
+             Options: new[] { "int arr[] = new int[5];", "int arr = new int(5);", "int[5] arr;", "array int[5];" }, Correct: 0,
+             Explanation: "In Java you create an array with int arr[] = new int[5]; or int[] arr = new int[5];. This allocates memory for 5 integers.")
+        };
 
-            Question Daily(string prompt, string[] options, int correct, string explanation) => new Question
-            {
-                Topic = dailyTopic, Type = QuestionType.MultipleChoice, Purpose = QuestionPurpose.Daily,
-                Prompt = prompt,
-                Payload = Json(new { options = options.Select((t, i) => new { id = ((char)('a' + i)).ToString(), text = t }).ToArray() }),
-                AnswerKey = Json(new { correctOptionId = ((char)('a' + correct)).ToString(), correctMessage = "Great job!" }),
-                Explanation = explanation
-            };
-
-            db.Questions.AddRange(
-                Daily("What data type is used to store a single 16-bit Unicode character?",
-                    new[] { "String", "char", "int", "byte" }, 1,
-                    "The char data type stores a single 16-bit Unicode character. Unlike String, which stores many characters, char holds exactly one."),
-                Daily("What is the default value of a boolean variable in a class?",
-                    new[] { "true", "false", "null", "0" }, 1,
-                    "The default value of a boolean declared in a class is false. It is assigned automatically if you give no initial value."),
-                Daily("What package must be imported to use the Scanner class?",
-                    new[] { "java.io.*", "java.input.*", "java.scanner.*", "java.util.*" }, 3,
-                    "Scanner is part of the java.util package. Import java.util.* or java.util.Scanner to use it."),
-                Daily("Which control statement is used to execute one block from many choices?",
-                    new[] { "if", "switch", "loop", "select" }, 1,
-                    "The switch statement runs one block of code out of many choices, based on the value of a variable."),
-                Daily("How do you create an array of integers with 5 elements?",
-                    new[] { "int arr[] = new int[5];", "int arr = new int(5);", "int[5] arr;", "array int[5];" }, 0,
-                    "In Java you create an array with int arr[] = new int[5]; or int[] arr = new int[5];. This allocates memory for 5 integers."));
-            await db.SaveChangesAsync();
+        // Questions seeded before codes existed are adopted rather than duplicated.
+        foreach (var def in dailyDefs)
+        {
+            var legacy = await db.Questions.FirstOrDefaultAsync(q =>
+                q.Purpose == QuestionPurpose.Daily && q.Code == null && q.Prompt == def.Prompt);
+            if (legacy != null) legacy.Code = def.Code;
         }
+        await db.SaveChangesAsync();
+
+        var dailyTopic = await db.Topics.FirstOrDefaultAsync(t => t.Title == "Daily Challenge")
+                         ?? new Topic { Title = "Daily Challenge" };
+
+        foreach (var def in dailyDefs)
+        {
+            if (await db.Questions.AnyAsync(q => q.Code == def.Code)) continue;
+
+            db.Questions.Add(new Question
+            {
+                Code = def.Code,
+                Topic = dailyTopic, Type = QuestionType.MultipleChoice, Purpose = QuestionPurpose.Daily,
+                Prompt = def.Prompt,
+                Payload = Json(new { options = def.Options.Select((t, i) => new { id = ((char)('a' + i)).ToString(), text = t }).ToArray() }),
+                AnswerKey = Json(new { correctOptionId = ((char)('a' + def.Correct)).ToString(), correctMessage = "Great job!" }),
+                Explanation = def.Explanation
+            });
+        }
+        await db.SaveChangesAsync();
 
         // 5. Learn path (runs once)
         if (await db.LearnSections.AnyAsync()) return;
