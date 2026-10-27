@@ -62,9 +62,11 @@
     /* ---------- Stage, text & multiple choice ---------- */
 
     /* Every block of lesson content sits on one column, so the prompt, the
-       options, the code editor and the token bank all line up. */
+       options, the code editor and the token bank all line up. The column is
+       wide enough for the code editor and the output panel to sit side by
+       side inside it. */
     :root {
-        --content-w: min(560px, 88vw);
+        --content-w: min(700px, 92vw);
     }
 
     #stage {
@@ -261,13 +263,13 @@
         height: 12px;
     }
 
-    /* The editor and the output panel sit side by side. The row is wider than
-       the text column, because the output needs room for a whole line of
-       text. 839px is 555px of editor + 12px of gap + 272px of output. */
+    /* The editor and the output panel sit side by side inside the same column
+       as the prompt and the token bank. The output needs room for a whole line
+       of text, so the column is wide enough for both. */
     .work {
         display: flex;
         gap: 12px;
-        width: min(839px, 96vw);
+        width: var(--content-w);
         align-items: stretch;
     }
 
