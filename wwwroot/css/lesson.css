@@ -324,14 +324,13 @@
 
     /* ---------- Main button, model & speech bubbles ---------- */
 
-    /* The action button sits on the same centre line as the content, so it can
-       never land on top of the options or the token bank. It follows the
-       content down the page, so the stage scrolls when a frame is tall. */
+    /* The action button sits in the bottom right corner of the screen. It is
+       pinned to the window, so it stays put when the stage scrolls. */
     .btn {
-        flex: none;
-        align-self: center;
+        position: fixed;
+        right: 6%;
+        bottom: 10%;
         width: 240px;
-        margin-top: 30px;
         padding: 20px;
         border: none;
         border-radius: 14px;
@@ -346,7 +345,12 @@
         cursor: not-allowed;
     }
 
+    /* The Next button on the intro and the outro stays on the content column,
+       in the middle of the screen. */
     .btn.mid {
+        position: static;
+        flex: none;
+        align-self: center;
         margin-top: 90px;
     }
 
