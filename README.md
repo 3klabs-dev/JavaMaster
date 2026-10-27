@@ -233,8 +233,10 @@ codes `daily.q1` to `daily.q5`, and they are only ever inserted once.
    — never the answers.
 2. Each answer is posted to `POST /api/learn/questions/{id}/check`. The server
    grades it and replies with the praise or the correction.
-3. A wrong answer does not move on. James Gosling corrects the learner and the
-   same question stays on screen until it is answered right.
+3. A wrong answer does not move on. James Gosling corrects the learner, and the
+   same question stays on screen until it is answered right. Pressing **Try
+   Again** puts the model back on its feet and clears the correction, so the
+   learner sees the question clean again.
 4. When all five questions are answered correctly the page asks the server to
    complete the node (`POST /api/learn/nodes/{id}/complete`). The server pays
    the XP and coins, unlocks the next lesson, and records the streak.
@@ -249,6 +251,18 @@ option, so the learner still has to work it out:
 
 > *Three of these follow every naming rule. The odd one out breaks the rule
 > about where a name is allowed to begin.*
+
+### A typed answer cannot be pasted in
+
+A question that asks the learner to type something usually has the answer
+sitting in the question itself — *"Code `Hello World!` between the quotation
+marks"*. So the typed field closes the clipboard off: paste, cut, drop and the
+context menu are all blocked on it, and the question text cannot be selected.
+
+Both of those live in the shared lesson engine (`wwwroot/js/lesson.js`), not in
+one lesson, so **every** lesson gets them — including the lessons added later.
+Any new question that renders a text field must go through the same engine, or
+it will not be protected.
 
 ---
 
