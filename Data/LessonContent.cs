@@ -30,7 +30,7 @@ public static class LessonContent
         // ---------------------------------------------------------------- Hello World
         new(1, "Hello World",
             "Welcome to the first chapter of the Java course! 🚀\n\nJava is a popular programming language designed by James Gosling to be \"written once, run anywhere\" with a Java Virtual Machine (JVM).",
-            "Awesome! We've learned the basics of Java\n\nBefore we add actions to them, move on to the next lesson to learn about the Java syntax present on every program out there.",
+            "Now that you can print a line of text, move on to the next lesson to start giving your code a place to keep its values.",
             new[]
         {
             new Q("hello-world.q1", QuestionType.MultipleChoice, "Hello World",
@@ -78,7 +78,7 @@ public static class LessonContent
         // ------------------------------------------------------------------- Variables
         new(2, "Variables",
             "Welcome to lesson 2! 🚀\n\nA variable is a named container that holds a value in memory. Before Java lets you use one, you must declare it — and a declaration always starts with the type of data it holds.",
-            "Nice work! You can now declare, name and initialise variables.\n\nNext, let’s look at the different data types Java gives you — from a single character all the way to huge whole numbers.",
+            "Now that your values have names, move on to the next lesson to start choosing the right type for each one.",
             new[]
         {
             new Q("variables.q1", QuestionType.MultipleChoice, "Variables",
@@ -127,7 +127,7 @@ public static class LessonContent
         // ----------------------------------------------------------------- Data Types
         new(3, "Data Types",
             "Welcome to lesson 3! 🚀\n\nJava has eight primitive data types: byte, short, int and long for whole numbers, float and double for decimals, plus char and boolean.",
-            "Great! You now know the primitive types and how Java handles them.\n\nNext up: the operators that let you calculate with these values.",
+            "Now that our variables know what kind of data they hold, move on to the next lesson to start giving them behaviors and actions.",
             new[]
         {
             new Q("data-types.q1", QuestionType.MultipleChoice, "Data Types",
@@ -179,7 +179,7 @@ public static class LessonContent
         // ----------------------------------------------------- Operators & Expressions
         new(5, "Operators & Expressions",
             "Welcome to lesson 4! 🚀\n\nOperators let you work with values — adding and dividing them, comparing them, and combining conditions. An expression is any combination of values and operators that produces a result.",
-            "Excellent! You can now calculate with and compare values in Java.\n\nUp next: control structures, so your programs can actually make decisions.",
+            "Now that you can calculate and compare values, move on to the next lesson to start making your programs make decisions.",
             new[]
         {
             new Q("operators-expressions.q1", QuestionType.MultipleChoice, "Operators & Expressions",

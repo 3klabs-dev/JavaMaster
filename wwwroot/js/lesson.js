@@ -182,22 +182,25 @@
         var b = $('bubbles');
         b.innerHTML = '';
         var m = $('model');
+        var over = screen === 'done' || screen === 'finish';
         m.style.display = screen === 'done' ? 'none' : 'block';
         var img = MODEL.stand;
 
-        $('topBar').style.display = screen === 'done' ? 'none' : 'flex';
+        $('topBar').style.display = over ? 'none' : 'flex';
         $('progress').style.display = screen === 'question' ? 'flex' : 'none';
 
         // The finished screen has no top bar and no progress dots, so the
         // room they needed at the top is given back and the panel can sit in
         // the middle of the screen.
-        st.classList.toggle('center', screen === 'done');
+        st.classList.toggle('center', over);
 
         if (screen === 'question') {
             $('progress').innerHTML = questions.map(function (_, i) {
                 return '<i class="' + (i <= qIndex ? 'on' : '') + '"></i>';
             }).join('');
         }
+
+        if (screen === 'finish') { renderFinish(); return; }
 
         if (screen === 'intro') {
             img = MODEL.wave;
@@ -257,57 +260,40 @@
         upd();
     }
 
-    function renderDone() {
+    // The finish screen comes between the last question and the completed
+    // screen. It is only shown the first time a lesson is finished, so a
+    // replay goes straight to the completed screen.
+    function renderFinish() {
         var c = completion || {};
-        var first = c.xpEarned > 0 || c.coinsEarned > 0;
         var title = (node && node.title) || 'the lesson';
 
-        // A short line says what just happened. The reward panel below it
-        // still shows what the lesson paid, so the line stays short.
-        var desc = first
-            ? 'Great job! You finished ' + title + '. The next lesson is now unlocked.'
-            : 'Nice review! You finished ' + title + '.';
+        // The first line says the lesson is done and the next one is open.
+        // The rest is the lesson's own closing text, which the server owns.
+        var outro = (c.outroText || '').split(/\n\n/).filter(function (t) { return t.trim(); });
 
-        // The left half is the player's standing - the rank they hold and the
-        // XP they have collected - and the right half is what this lesson paid
-        // them. The two are different numbers, so the panel does not show the
-        // same one twice.
+        $('model').src = MODEL.drink;
+        $('stage').innerHTML = '<div class="text finish">' +
+            '<p>' + esc('Great Job! You finished ' + title + '. The next lesson is now unlocked.') + '</p>' +
+            outro.map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') +
+            '</div><button class="btn mid" data-action="finishNext">Next</button>';
+    }
+
+    function renderDone() {
+        var c = completion || {};
+
+        // The completed screen is the plain one: the icon, the heading and a
+        // way out. The "great job" line was already said on the finish screen,
+        // so a line only appears here when the lesson was a replay and there
+        // was no finish screen to say it on.
+        var desc = c.firstTime ? '' :
+            '<p class="done-desc">Nice review! Rewards can only be earned once per lesson.</p>';
+
         $('stage').innerHTML = '<div class="done"><img src="/icons/done.png" alt=""><h1>COMPLETED!</h1>' +
-            '<p class="done-desc">' + esc(desc) + '</p>' +
-            '<div class="rew"><div class="l"><b id="rankName">' + esc(c.rankBefore || 'Starter') + '</b>' +
-            '<b id="xpNum">' + (c.xpBefore || 0) + '</b>' +
-            '<b>Coins</b><b>+' + (c.coinsEarned || 0) + '</b></div>' +
-            '<div class="earn">EARNED<div>' + (c.xpEarned || 0) + ' XP</div></div></div>' +
-            (first ? '' : '<p class="replay-note">Lesson already completed. Rewards can only be earned once.</p>') +
-            '<button class="rbtn" id="rewardBtn">' + (first ? 'Get Reward' : 'Continue') + '</button></div>';
+            desc +
+            '<button class="rbtn" id="rewardBtn">Continue</button></div>';
         $('bubbles').innerHTML = '';
         $('bgMusic').pause();
         sfx('completedSound');
-
-        // The XP counts up to the new total, and the rank name changes once it
-        // has landed.
-        countUp($('xpNum'), c.xpBefore || 0, c.xpAfter || 0, 1200);
-        setTimeout(function () {
-            var r = $('rankName');
-            if (r) r.textContent = c.rankAfter || 'Starter';
-        }, 1250);
-    }
-
-    // Counts a number up from one value to another.
-    function countUp(el, from, to, d) {
-        if (!el) return;
-        // Someone who asked for less motion gets the number straight away.
-        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            el.textContent = to;
-            return;
-        }
-        var t0 = performance.now();
-        (function f(n) {
-            var t = Math.min((n - t0) / d, 1);
-            var e = 1 - Math.pow(1 - t, 3);
-            el.textContent = Math.round(from + (to - from) * e);
-            if (t < 1) requestAnimationFrame(f);
-        })(t0);
     }
 
     /* ----------------------------------------------------------- answering */
@@ -435,7 +421,9 @@
             .then(function (res) {
                 busy = false;
                 completion = res;
-                screen = 'done';
+                // The finish screen is the celebration, and it only happens the
+                // first time. A replay goes straight to the completed screen.
+                screen = res.firstTime ? 'finish' : 'done';
                 render();
             })
             .catch(function (err) {
@@ -567,6 +555,7 @@
         if (b.dataset.opt) { pick(b.dataset.opt); return; }
         if (b.dataset.token !== undefined) { addTok(b.dataset.token); return; }
         if (b.dataset.action === 'start') { startLesson(); return; }
+        if (b.dataset.action === 'finishNext') { screen = 'done'; render(); return; }
         if (b.dataset.action === 'rem') { rem(); return; }
         if (b.dataset.action === 'reset') { reset(); return; }
         if (b.dataset.action === 'back') { location.href = '/pages/Learn.html'; return; }
