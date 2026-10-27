@@ -391,10 +391,14 @@
 
     function retry() {
         phase = 'answer';
+        // The model goes back to standing and the correction goes away, so the
+        // learner sees a clean question again instead of the same wrong answer
+        // still being on screen.
+        correcting = false;
+        lastMessage = '';
         var q = questions[qIndex];
         // Keep the typed text so a small slip does not have to be typed again,
         // but clear the choices so a wrong option is not simply left selected.
-        // The correction stays on screen until the learner answers again.
         if (q.type === 'MultipleChoice') sel = null;
         if (q.type === 'FillSlots' || q.type === 'ArrangeTokens') slots = {};
         serverOutput = null;
