@@ -121,69 +121,12 @@ public static class DbSeeder
         // NOTE: Hint is null on purpose. Learn mode has no power-ups.
         // Explanation = message shown when the answer is WRONG.
         // AnswerKey (server only) holds the answer, the praise message, and the output panel text.
-
-        // Q1: multiple choice
-        var q1 = new Question
-        {
-            Topic = tHello, Type = QuestionType.MultipleChoice, Purpose = QuestionPurpose.Lesson,
-            Prompt = "In Java, we use certain statements to display output. For example, System.out.println(); is used to print text to the console.\n\nWhich Java statement prints text to the console?",
-            Payload = Json(new { options = new[] {
-                new { id = "a", text = "System.out.println(\"Hello\");" },
-                new { id = "b", text = "String message = \"Hello\";" } } }),
-            AnswerKey = Json(new { correctOptionId = "a", correctMessage = "Great job!" }),
-            Explanation = "That only creates a variable. Use System.out.println() to print."
-        };
-
-        // Q2: type inside the code box
-        var q2 = new Question
-        {
-            Topic = tHello, Type = QuestionType.FillBlank, Purpose = QuestionPurpose.Lesson,
-            Prompt = "Code \"Hello World!\" between the opening and closing quotation marks.",
-            Payload = Json(new { template = new[] { "System", ".", "out", ".", "println", "(", "\"{{blank}}\"", ")", ";" } }),
-            AnswerKey = Json(new { accepted = new[] { "Hello World!" }, caseSensitive = true,
-                                   output = "Hello World!", correctMessage = "Excellent!" }),
-            Explanation = "Type exactly \"Hello World!\"."
-        };
-
-        // Q3: arrange tokens (the dots between tokens are drawn by the frontend)
-        var q3 = new Question
-        {
-            Topic = tHello, Type = QuestionType.ArrangeTokens, Purpose = QuestionPurpose.Lesson,
-            Prompt = "Let's remember how to code an output. Code an output that says \"Hello World!\".",
-            Payload = Json(new { tokens = new[] { "System", "out", "println", "(", ")", "\"Hello World!\"", ";" } }),
-            AnswerKey = Json(new { order = new[] { "System", "out", "println", "(", "\"Hello World!\"", ")", ";" },
-                                   output = "Hello World!", correctMessage = "Excellent!" }),
-            Explanation = "The order is off. It should be System.out.println(\"Hello World!\");"
-        };
-
-        // Q4: multiple choice
-        var q4 = new Question
-        {
-            Topic = tHello, Type = QuestionType.MultipleChoice, Purpose = QuestionPurpose.Lesson,
-            Prompt = "In Java, System.out.println(); prints text and moves to a new line, while System.out.print(); prints text but stays on the same line.\n\nWhich statement prints text without moving to a new line?",
-            Payload = Json(new { options = new[] {
-                new { id = "a", text = "System.out.println(\"Welcome\");" },
-                new { id = "b", text = "System.out.print(\"Welcome\");" } } }),
-            AnswerKey = Json(new { correctOptionId = "b", correctMessage = "Well done!" }),
-            Explanation = "That moves to a new line. Use System.out.print() to stay on the same line."
-        };
-
-        // Q5: fill the slots from a bank (new type: FillSlots)
-        var q5 = new Question
-        {
-            Topic = tHello, Type = QuestionType.FillSlots, Purpose = QuestionPurpose.Lesson,
-            Prompt = "Code an output that displays \"The result is: 42\".\nRemember print stays on the same line, println moves to a new line.",
-            Payload = Json(new {
-                lines = new[] {
-                    new[] { "System", ".", "out", ".", "{{1}}", "(", "\"The result is: \"", ")", ";" },
-                    new[] { "System", ".", "out", ".", "{{2}}", "(", "42", ")", ";" } },
-                bank = new[] { "println", "print" } }),
-            AnswerKey = Json(new { slots = new Dictionary<string, string> { ["1"] = "print", ["2"] = "println" },
-                                   output = "The result is: 42", correctMessage = "Amazing!" }),
-            Explanation = "Use print for the first line so 42 stays on the same line."
-        };
-
-        var helloQuestions = new[] { q1, q2, q3, q4, q5 };
+        //
+        // The questions themselves are NOT created here. They live in
+        // Data/LessonContent.cs, which is the single source of truth for the
+        // lesson content, and it seeds them a moment later. Keeping a second
+        // copy of them here meant a fresh install took the wording and the
+        // answer keys from this file and never saw the ones in LessonContent.
 
         var intro = new LearnSection { Title = "Introduction to Java", SortOrder = 1, IsPublished = true };
 
@@ -195,8 +138,6 @@ public static class DbSeeder
         var hello = Node("Hello World", "Your journey starts here.", NodeType.Lesson, 1, tHello, 120, 30);
         hello.IntroText = "Welcome to the first chapter of the Java course! 🚀\n\nJava is a popular programming language designed by James Gosling to be \"written once, run anywhere\" with a Java Virtual Machine (JVM).";
         hello.OutroText = "Now that you can print a line of text, move on to the next lesson to start giving your code a place to keep its values.";
-        for (int i = 0; i < helloQuestions.Length; i++)
-            hello.NodeQuestions.Add(new NodeQuestion { Question = helloQuestions[i], SortOrder = i + 1 });
 
         intro.Nodes.Add(hello);
         // The other nodes have no questions yet. Their rewards are placeholders.

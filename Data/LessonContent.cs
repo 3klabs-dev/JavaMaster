@@ -46,7 +46,7 @@ public static class LessonContent
                 new { template = new[] { "System", ".", "out", ".", "println", "(", "\"{{blank}}\"", ")", ";" } },
                 new { accepted = new[] { "Hello World!" }, caseSensitive = true,
                       output = "Hello World!", correctMessage = "Excellent!" },
-                "Type the text exactly as the question shows it, including the capital letters and the exclamation mark."),
+                "Java is case-sensitive, so the text has to match exactly - the same capital letters and the same exclamation mark."),
 
             new Q("hello-world.q3", QuestionType.ArrangeTokens, "Hello World",
                 "Let's remember how to code an output. Code an output that says \"Hello World!\".",
@@ -95,7 +95,7 @@ public static class LessonContent
                 new { template = new[] { "{{blank}}", "price", "=", "9.99", ";" } },
                 new { accepted = new[] { "double" }, caseSensitive = true,
                       correctMessage = "Perfect - double holds decimal values." },
-                "The other floating-point type needs an f after the value, so it would not compile here."),
+                "Two things can go wrong here. Java is case-sensitive, so the type has to be spelled exactly as Java writes it - a capitalized version would not compile. And the other floating-point type needs an f after the value, so it would not compile here either."),
 
             new Q("variables.q3", QuestionType.FillSlots, "Variables",
                 "A boolean variable can hold only two values: true or false. It is often used as a flag, such as isReady.\n\nBuild the statement that declares isReady and sets it to true.",
@@ -145,7 +145,7 @@ public static class LessonContent
                 new { template = new[] { "long", "total", "=", "42", "{{blank}}", ";" } },
                 new { accepted = new[] { "L", "l" }, caseSensitive = false,
                       correctMessage = "Correct - 42L is a long literal." },
-                "It is a single letter, and it goes straight after the digits with no space."),
+                "It is a single letter, and it goes straight after the digits with no space. Java accepts either a capital L or a small l here - this suffix is the one place where the case does not matter."),
 
             new Q("data-types.q3", QuestionType.FillSlots, "Data Types",
                 "Every decimal literal without a suffix is a double. To store a smaller decimal in a float you must add an f - otherwise the compiler assumes you meant a double.\n\nBuild the statement that stores the value 3.14 in a variable called pi.",
@@ -195,9 +195,9 @@ public static class LessonContent
             new Q("operators-expressions.q2", QuestionType.FillBlank, "Operators & Expressions",
                 "When both operands are whole numbers, Java does integer division and drops the remainder - so 5 / 2 is 2, not 2.5. Casting one operand to a floating-point type forces a decimal result. Java has two: float and double. Either one works here.\n\nFill in the missing type inside the cast.",
                 new { template = new[] { "System", ".", "out", ".", "println", "(", "(", "{{blank}}", ")", "a", "/", "b", ")", ";" } },
-                new { accepted = new[] { "double", "float" }, caseSensitive = false,
+                new { accepted = new[] { "double", "float" }, caseSensitive = true,
                       output = "2.5", correctMessage = "Correct - the cast forces decimal division." },
-                "It goes inside the parentheses, before the operand, and it has to be one of Java's two floating-point types."),
+                "It goes inside the parentheses, before the operand, and it has to be one of Java's two floating-point types. Java is case-sensitive, so spell it exactly as Java writes it."),
 
             new Q("operators-expressions.q3", QuestionType.FillSlots, "Operators & Expressions",
                 "The compound assignment operator += adds and assigns in one step, so a += 3 means a = a + 3. It can be used directly inside a print statement.\n\nBuild the statement that adds 3 to a and prints the new value, when a is 5.",
