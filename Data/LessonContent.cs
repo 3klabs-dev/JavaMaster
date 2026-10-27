@@ -15,6 +15,7 @@ namespace JavaMaster.Api.Data;
 public static class LessonContent
 {
     public sealed record Q(
+        string Code,
         QuestionType Type,
         string Topic,
         string Prompt,
@@ -32,7 +33,7 @@ public static class LessonContent
             "Awesome! We've learned the basics of Java\n\nBefore we add actions to them, move on to the next lesson to learn about the Java syntax present on every program out there.",
             new[]
         {
-            new Q(QuestionType.MultipleChoice, "Hello World",
+            new Q("hello-world.q1", QuestionType.MultipleChoice, "Hello World",
                 "In Java, we use certain statements to display output. For example, System.out.println(); is used to print text to the console.\n\nWhich Java statement prints text to the console?",
                 new { options = new[] {
                     new { id = "a", text = "System.out.println(\"Hello\");" },
@@ -40,14 +41,14 @@ public static class LessonContent
                 new { correctOptionId = "a", correctMessage = "Great job!" },
                 "Only one of these actually sends text to the console. The other one stores a value in memory without displaying it."),
 
-            new Q(QuestionType.FillBlank, "Hello World",
+            new Q("hello-world.q2", QuestionType.FillBlank, "Hello World",
                 "Code \"Hello World!\" between the opening and closing quotation marks.",
                 new { template = new[] { "System", ".", "out", ".", "println", "(", "\"{{blank}}\"", ")", ";" } },
                 new { accepted = new[] { "Hello World!" }, caseSensitive = true,
                       output = "Hello World!", correctMessage = "Excellent!" },
                 "Type the text exactly as the question shows it, including the capital letters and the exclamation mark."),
 
-            new Q(QuestionType.ArrangeTokens, "Hello World",
+            new Q("hello-world.q3", QuestionType.ArrangeTokens, "Hello World",
                 "Let's remember how to code an output. Code an output that says \"Hello World!\".",
                 new { tokens = new[] { "System", "out", "println", "(", ")", "\"Hello World!\"", ";" },
                       lines = new[] { new[] { "{{1}}", ".", "{{2}}", ".", "{{3}}", "{{4}}", "{{5}}", "{{6}}", "{{7}}" } } },
@@ -55,7 +56,7 @@ public static class LessonContent
                       output = "Hello World!", correctMessage = "Excellent!" },
                 "The order of the pieces matters. Build it the way Java reads a call: the object first, then the method, then the value."),
 
-            new Q(QuestionType.MultipleChoice, "Hello World",
+            new Q("hello-world.q4", QuestionType.MultipleChoice, "Hello World",
                 "In Java, System.out.println(); prints text and moves to a new line, while System.out.print(); prints text but stays on the same line.\n\nWhich statement prints text without moving to a new line?",
                 new { options = new[] {
                     new { id = "a", text = "System.out.println(\"Welcome\");" },
@@ -63,7 +64,7 @@ public static class LessonContent
                 new { correctOptionId = "b", correctMessage = "Well done!" },
                 "One of these ends the line and moves the cursor down. The other leaves the cursor exactly where it is."),
 
-            new Q(QuestionType.FillSlots, "Hello World",
+            new Q("hello-world.q5", QuestionType.FillSlots, "Hello World",
                 "Code an output that displays \"The result is: 42\".\nRemember print stays on the same line, println moves to a new line.",
                 new { lines = new[] {
                         new[] { "System", ".", "out", ".", "{{1}}", "(", "\"The result is: \"", ")", ";" },
@@ -80,7 +81,7 @@ public static class LessonContent
             "Nice work! You can now declare, name and initialise variables.\n\nNext, let’s look at the different data types Java gives you — from a single character all the way to huge whole numbers.",
             new[]
         {
-            new Q(QuestionType.MultipleChoice, "Variables",
+            new Q("variables.q1", QuestionType.MultipleChoice, "Variables",
                 "A declaration tells Java three things: the type of data the variable holds, the name you will use for it, and optionally the value it starts with.\n\nWhich of these is a valid variable declaration?",
                 new { options = new[] {
                     new { id = "a", text = "int age = 20;" },
@@ -89,14 +90,14 @@ public static class LessonContent
                 new { correctOptionId = "a", correctMessage = "Great job!" },
                 "A Java declaration always puts the type first, then the name, then the value. Check each option for all three in that order."),
 
-            new Q(QuestionType.FillBlank, "Variables",
+            new Q("variables.q2", QuestionType.FillBlank, "Variables",
                 "The type tells Java how much memory to reserve and what the variable is allowed to hold. Exactly one of Java's primitive types stores a decimal number like 9.99 without needing a suffix on the value.\n\nFill in the missing type.",
                 new { template = new[] { "{{blank}}", "price", "=", "9.99", ";" } },
                 new { accepted = new[] { "double" }, caseSensitive = true,
                       correctMessage = "Perfect - double holds decimal values." },
                 "The other floating-point type needs an f after the value, so it would not compile here."),
 
-            new Q(QuestionType.FillSlots, "Variables",
+            new Q("variables.q3", QuestionType.FillSlots, "Variables",
                 "A boolean variable can hold only two values: true or false. It is often used as a flag, such as isReady.\n\nBuild the statement that declares isReady and sets it to true.",
                 new { lines = new[] { new[] { "{{1}}", "{{2}}", "=", "{{3}}", ";" } },
                   bank = new[] { "boolean", "isReady", "true", "false", "int", "String", "null" } },
@@ -104,7 +105,7 @@ public static class LessonContent
                       correctMessage = "Nice! A boolean is either true or false." },
                 "There are three blanks: the type, the name and the value. The prompt gives you the name and the value, so the type is the one that can only be true or false."),
 
-            new Q(QuestionType.MultipleChoice, "Variables",
+            new Q("variables.q4", QuestionType.MultipleChoice, "Variables",
                 "Java identifiers - the names you give variables and methods - are case-sensitive, may contain letters, digits, underscores and dollar signs, and cannot start with a digit. They also cannot be a keyword such as class or int.\n\nWhich of these is not a valid variable name?",
                 new { options = new[] {
                     new { id = "a", text = "_total" },
@@ -114,7 +115,7 @@ public static class LessonContent
                 new { correctOptionId = "c", correctMessage = "Right - a name cannot begin with a digit." },
                 "Three of these follow every naming rule. The odd one out breaks the rule about where a name is allowed to begin."),
 
-            new Q(QuestionType.FillSlots, "Variables",
+            new Q("variables.q5", QuestionType.FillSlots, "Variables",
                 "A final variable cannot be changed after it is created, which makes it a constant. Constants are written in ALL CAPS by convention. The highest score is a whole number.\n\nBuild the constant declaration for MAX_SCORE equal to 100.",
                 new { lines = new[] { new[] { "final", "{{1}}", "{{2}}", "=", "{{3}}", ";" } },
                   bank = new[] { "int", "boolean", "MAX_SCORE", "MIN_SCORE", "100", "50", "final", "static" } },
@@ -129,7 +130,7 @@ public static class LessonContent
             "Great! You now know the primitive types and how Java handles them.\n\nNext up: the operators that let you calculate with these values.",
             new[]
         {
-            new Q(QuestionType.MultipleChoice, "Data Types",
+            new Q("data-types.q1", QuestionType.MultipleChoice, "Data Types",
                 "The four whole-number types are byte, short, int and long. The two decimal types are float and double. Then there is char for a single character and boolean for true or false.\n\nWhich type stores a single 16-bit Unicode character, such as a letter?",
                 new { options = new[] {
                     new { id = "a", text = "String" },
@@ -139,14 +140,14 @@ public static class LessonContent
                 new { correctOptionId = "b", correctMessage = "Right - char holds exactly one character." },
                 "Java stores text in two ways: a whole word and a single letter. One of these options does the second one."),
 
-            new Q(QuestionType.FillBlank, "Data Types",
+            new Q("data-types.q2", QuestionType.FillBlank, "Data Types",
                 "When a whole number is too large for an int, Java lets you write it as a long by adding the letter L to the end of the number. Without the L, the number is just an int.\n\nFill in the missing suffix.",
                 new { template = new[] { "long", "total", "=", "42", "{{blank}}", ";" } },
                 new { accepted = new[] { "L", "l" }, caseSensitive = false,
                       correctMessage = "Correct - 42L is a long literal." },
                 "It is a single letter, and it goes straight after the digits with no space."),
 
-            new Q(QuestionType.FillSlots, "Data Types",
+            new Q("data-types.q3", QuestionType.FillSlots, "Data Types",
                 "Every decimal literal without a suffix is a double. To store a smaller decimal in a float you must add an f - otherwise the compiler assumes you meant a double.\n\nBuild the statement that stores the value 3.14 in a variable called pi.",
                 new { lines = new[] { new[] { "{{1}}", "{{2}}", "=", "3.14", ";" } },
                   bank = new[] { "double", "float", "pi", "int", "long", "3.14", "3.14f" } },
@@ -154,7 +155,7 @@ public static class LessonContent
                       correctMessage = "Nice - double pi = 3.14;" },
                 "Two blanks: the type and the variable name. The value is already there, so pick the type that a decimal without a suffix becomes."),
 
-            new Q(QuestionType.MultipleChoice, "Data Types",
+            new Q("data-types.q4", QuestionType.MultipleChoice, "Data Types",
                 "When both operands are whole numbers, Java does integer division and throws away the decimal part. To keep the decimal you must use a double or a float.\n\nWhat does  int x = 9; int y = 2; System.out.println(x / y);  print?",
                 new { options = new[] {
                     new { id = "a", text = "4.5" },
@@ -164,7 +165,7 @@ public static class LessonContent
                 new { correctOptionId = "b", correctMessage = "Right - 9 / 2 is 4, the remainder is dropped." },
                 "Both operands are whole numbers here, so Java does integer division and drops the remainder. Work out 9 divided by 2 with the remainder thrown away."),
 
-            new Q(QuestionType.FillSlots, "Data Types",
+            new Q("data-types.q5", QuestionType.FillSlots, "Data Types",
                 "A char literal is wrapped in single quotes, and a boolean holds only true or false. The declarations below store the letter A, and a flag that starts out false because the work is not finished yet.\n\nBuild the two declarations below.",
                 new { lines = new[] {
                         new[] { "char", "letter", "=", "{{1}}", ";" },
@@ -181,7 +182,7 @@ public static class LessonContent
             "Excellent! You can now calculate with and compare values in Java.\n\nUp next: control structures, so your programs can actually make decisions.",
             new[]
         {
-            new Q(QuestionType.MultipleChoice, "Operators & Expressions",
+            new Q("operators-expressions.q1", QuestionType.MultipleChoice, "Operators & Expressions",
                 "Java groups its operators into families: arithmetic (+ - * / %), unary (+ - ++ --), relational (> < >= <= == !=), logical (&& || !) and assignment (= += -= *= /=).\n\nWhich operator returns the remainder of a division?",
                 new { options = new[] {
                     new { id = "a", text = "/" },
@@ -191,14 +192,14 @@ public static class LessonContent
                 new { correctOptionId = "b", correctMessage = "Right - % is the modulus operator." },
                 "One of these is named after the mathematical term for remainder. The others either divide, multiply or add."),
 
-            new Q(QuestionType.FillBlank, "Operators & Expressions",
+            new Q("operators-expressions.q2", QuestionType.FillBlank, "Operators & Expressions",
                 "When both operands are whole numbers, Java does integer division and drops the remainder - so 5 / 2 is 2, not 2.5. Casting one operand to a floating-point type forces a decimal result. Java has two: float and double. Either one works here.\n\nFill in the missing type inside the cast.",
                 new { template = new[] { "System", ".", "out", ".", "println", "(", "(", "{{blank}}", ")", "a", "/", "b", ")", ";" } },
                 new { accepted = new[] { "double", "float" }, caseSensitive = false,
                       output = "2.5", correctMessage = "Correct - the cast forces decimal division." },
                 "It goes inside the parentheses, before the operand, and it has to be one of Java's two floating-point types."),
 
-            new Q(QuestionType.FillSlots, "Operators & Expressions",
+            new Q("operators-expressions.q3", QuestionType.FillSlots, "Operators & Expressions",
                 "The compound assignment operator += adds and assigns in one step, so a += 3 means a = a + 3. It can be used directly inside a print statement.\n\nBuild the statement that adds 3 to a and prints the new value, when a is 5.",
                 new { lines = new[] { new[] { "System", ".", "out", ".", "println", "(", "a", "{{1}}", "3", ")", ";" } },
                   bank = new[] { "+=", "-=", "*=", "=", "++" } },
@@ -206,7 +207,7 @@ public static class LessonContent
                       output = "8", correctMessage = "Nice - a += 3 adds three and prints 8." },
                 "One blank. It has to add three and assign the result in a single step, not just assign the number three."),
 
-            new Q(QuestionType.MultipleChoice, "Operators & Expressions",
+            new Q("operators-expressions.q4", QuestionType.MultipleChoice, "Operators & Expressions",
                 "Relational operators compare two values and produce a boolean. == asks \"are they equal?\", while a single = assigns a value. The && operator means \"and\" and is true only when both sides are true.\n\nWhat does  int a = 5; int b = 2; System.out.println(a > b && b < a);  print?",
                 new { options = new[] {
                     new { id = "a", text = "true" },
@@ -216,7 +217,7 @@ public static class LessonContent
                 new { correctOptionId = "a", correctMessage = "Right - 5 > 2 and 2 < 5 are both true." },
                 "Check each comparison on its own before combining them. With && the result depends on both of them."),
 
-            new Q(QuestionType.FillSlots, "Operators & Expressions",
+            new Q("operators-expressions.q5", QuestionType.FillSlots, "Operators & Expressions",
                 "x++ is post-increment: it uses the old value of x and then increases it. ++x is pre-increment: it increases first and then uses the new value.\n\nBuild the statement that prints a after increasing it first, when a is 5.",
                 new { lines = new[] { new[] { "System", ".", "out", ".", "println", "(", "{{1}}", "a", ")", ";" } },
                   bank = new[] { "++", "--", "+", "-" } },
@@ -241,8 +242,10 @@ public static class LessonContent
             var node = nodes.FirstOrDefault(n => n.SortOrder == lesson.NodeOrder && n.NodeType == NodeType.Lesson);
             if (node == null) continue;
 
-            node.IntroText = lesson.IntroText;
-            node.OutroText = lesson.OutroText;
+            // The text of a lesson belongs to the database once it is there, so a
+            // professor can rewrite it in the app without the code overwriting it.
+            if (string.IsNullOrEmpty(node.IntroText)) node.IntroText = lesson.IntroText;
+            if (string.IsNullOrEmpty(node.OutroText)) node.OutroText = lesson.OutroText;
 
             var topic = await db.Topics.FirstOrDefaultAsync(t => t.Title == lesson.NodeTitle);
             if (topic == null)
@@ -254,31 +257,53 @@ public static class LessonContent
 
             var links = node.NodeQuestions.OrderBy(nq => nq.SortOrder).ToList();
 
+            // Questions that were seeded before codes existed are adopted rather
+            // than duplicated, so upgrading does not throw the content away.
+            for (int i = 0; i < lesson.Questions.Length && i < links.Count; i++)
+            {
+                var existing = links[i].Question;
+                if (existing != null && existing.Code == null) existing.Code = lesson.Questions[i].Code;
+            }
+            await db.SaveChangesAsync();
+
             for (int i = 0; i < lesson.Questions.Length; i++)
             {
                 var def = lesson.Questions[i];
-                var link = links.FirstOrDefault(nq => nq.SortOrder == i + 1);
-                Question? question = link?.Question;
+
+                // The code provides the starting content. Once a question is in the
+                // database it belongs to the database, so a professor who edits it in
+                // the app does not lose that edit on the next start.
+                var question = await db.Questions.FirstOrDefaultAsync(q => q.Code == def.Code);
 
                 if (question == null)
                 {
-                    question = new Question { Topic = topic, Purpose = QuestionPurpose.Lesson };
+                    question = new Question
+                    {
+                        Code = def.Code,
+                        Topic = topic,
+                        Purpose = QuestionPurpose.Lesson,
+                        Type = def.Type,
+                        Prompt = def.Prompt,
+                        Payload = Json(def.Payload),
+                        AnswerKey = Json(def.AnswerKey),
+                        Explanation = def.Explanation,
+                        Hint = null,               // Learn mode has no power-ups.
+                        Difficulty = 1,
+                        IsActive = true
+                    };
                     db.Questions.Add(question);
-                    var newLink = new NodeQuestion { LearnNodeId = node.Id, Question = question, SortOrder = i + 1 };
-                    db.NodeQuestions.Add(newLink);
-                    node.NodeQuestions.Add(newLink);
-                }
 
-                question.Type = def.Type;
-                question.Topic = topic;
-                question.Purpose = QuestionPurpose.Lesson;
-                question.Prompt = def.Prompt;
-                question.Payload = Json(def.Payload);
-                question.AnswerKey = Json(def.AnswerKey);
-                question.Explanation = def.Explanation;
-                question.Hint = null;           // Learn mode has no power-ups.
-                question.Difficulty = 1;
-                question.IsActive = true;
+                    var link = new NodeQuestion { LearnNodeId = node.Id, Question = question, SortOrder = i + 1 };
+                    db.NodeQuestions.Add(link);
+                    node.NodeQuestions.Add(link);
+                }
+                else if (!node.NodeQuestions.Any(nq => nq.QuestionId == question.Id))
+                {
+                    // The question exists but is not in this node yet.
+                    var link = new NodeQuestion { LearnNodeId = node.Id, Question = question, SortOrder = i + 1 };
+                    db.NodeQuestions.Add(link);
+                    node.NodeQuestions.Add(link);
+                }
             }
         }
 

@@ -37,6 +37,8 @@ public class AppDbContext : DbContext
         {
             e.Property(q => q.Type).HasConversion<string>().HasMaxLength(30);
             e.Property(q => q.Purpose).HasConversion<string>().HasMaxLength(20);
+            // Content that comes from the code carries a key, so it can only be seeded once.
+            e.HasIndex(q => q.Code).IsUnique().HasFilter("[Code] IS NOT NULL");
         });
 
         b.Entity<LearnNode>(e =>
