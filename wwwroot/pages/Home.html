@@ -201,8 +201,12 @@
         var TYPING_SPEED = 40;    // ms per letter (lower = faster)
         var typingTimer = null;
 
+        // The name in the greeting comes from the server, like the rest of the
+        // player data. It is filled in once the player has been read.
+        var playerName = 'User01';
+
         function setGreeting(message) {
-            var name = localStorage.getItem('loggedInUsername') || 'User01';
+            var name = playerName;
             var text = message.replace('{user}', '@' + name);
             var el = document.getElementById('greetingText');
 
@@ -274,12 +278,11 @@
             svg.setAttribute('viewBox', [-12 * k, 0, w + 12 * k, h + 9 * k].join(' '));
         }
 
-        // Pick today's greeting, then keep the bubble fitted if the text, fonts or window size change
-        setGreeting(greetings[new Date().getDay()]);
+        // Keep the bubble fitted if the text, fonts or window size change
         new ResizeObserver(drawBubble).observe(document.getElementById('speechBubble'));
         if (document.fonts) document.fonts.ready.then(drawBubble);
 
-        
+
         // Player numbers come from the server: coins, power-ups, and Learn progress
         async function loadHome() {
             try {
@@ -288,8 +291,16 @@
                 document.getElementById('hpCount').textContent = me.inventory.HEAL_POTION ?? 0;
                 document.getElementById('hintCount').textContent = me.inventory.HINT ?? 0;
                 document.getElementById('streakCount').textContent = me.inventory.STREAK_REPAIR ?? 0;
+
+                // The greeting uses the name from the account, so it waits for
+                // the player to be read before it is typed out.
+                playerName = me.fullName || 'User01';
+                setGreeting(greetings[new Date().getDay()]);
             } catch (e) {
                 console.error('Could not load player data', e);
+                // The server could not be reached, so the greeting keeps the
+                // default name.
+                setGreeting(greetings[new Date().getDay()]);
             }
 
             try {
