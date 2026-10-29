@@ -66,6 +66,13 @@ public static class AnswerChecker
         return given.Zip(expected).All(p => string.Equals(p.First, p.Second, StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>
+    /// A find-the-bug question shows the learner a listing of code and asks which
+    /// line is wrong. The listing is in the payload the browser receives; the
+    /// number of the faulty line is in the answer key, so the browser is never
+    /// told which line it is. The learner answers with the line number they
+    /// picked, counted from 1.
+    /// </summary>
     private static bool Line(JsonElement key, JsonElement a) =>
         a.GetProperty("lineNumber").GetInt32() == key.GetProperty("lineNumber").GetInt32();
 

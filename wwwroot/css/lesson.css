@@ -198,6 +198,96 @@
         flex-wrap: wrap;
     }
 
+    /* ---------- Find the bug: a listing the learner reads and clicks ---------- */
+    /* A listing is taller than the other question bodies, so it starts higher
+       and keeps clear of the model in the corner. */
+    #stage.listing {
+        padding-top: 110px;
+    }
+
+    /* A listing that is still too long scrolls instead of running into the
+       model. */
+    .work.listing .editor {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .work.listing .code {
+        gap: 4px;
+        padding: 12px 18px;
+    }
+
+    .codeline {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        width: 100%;
+        text-align: left;
+        background: #232841;
+        border: 2px solid transparent;
+        border-radius: 9px;
+        padding: 5px 12px;
+        cursor: pointer;
+        transition: .15s;
+    }
+
+    .codeline .num {
+        color: #6f7899;
+        font: 600 12px 'Inter', sans-serif;
+        min-width: 14px;
+        text-align: right;
+        padding-top: 2px;
+    }
+
+    .codeline .src {
+        color: #e9e4f2;
+        font: 600 12px ui-monospace, Consolas, monospace;
+        white-space: pre-wrap;
+    }
+
+    .codeline:hover {
+        background: #2b314f;
+    }
+
+    .codeline.sel {
+        background: #26304d;
+        border-color: #4a9eff;
+    }
+
+    .codeline.ok {
+        background: #24441f;
+        border-color: #7ed321;
+    }
+
+    .codeline.ok .src {
+        color: #c9f39a;
+    }
+
+    .codeline.bad {
+        background: #4a2530;
+        border-color: #e0525f;
+    }
+
+    .codeline.bad .src {
+        color: #ffc9d0;
+    }
+
+    .codeline:disabled {
+        cursor: default;
+    }
+
+    .codeline:disabled:hover {
+        background: #232841;
+    }
+
+    .codeline.ok:disabled:hover {
+        background: #24441f;
+    }
+
+    .codeline.bad:disabled:hover {
+        background: #4a2530;
+    }
+
     .chip {
         background: #2f3450;
         border-radius: 7px;

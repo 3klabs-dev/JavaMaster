@@ -30,6 +30,7 @@ Accept: application/json
 ###   FillBlank       -> { "text": "Hello World!" }
 ###   ArrangeTokens   -> { "order": ["System", "out", "println"] }
 ###   FillSlots       -> { "slots": { "1": "print", "2": "println" } }
+###   FindBug         -> { "lineNumber": 2 }   the line the learner thinks has the bug
 POST {{JavaMaster.Api_HostAddress}}/api/learn/questions/1/check
 Content-Type: application/json
 
