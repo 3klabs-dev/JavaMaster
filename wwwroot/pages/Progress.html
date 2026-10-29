@@ -188,21 +188,9 @@
             }
         });
 
-        // Load the saved profile avatar from localStorage
-        function loadNavbarAvatar() {
-            const savedAvatar = localStorage.getItem('profileAvatar') || '/avatars/Avatar 1.png';
-            const navbarAvatarElement = document.getElementById('navbarAvatar');
-
-            if (navbarAvatarElement) {
-                navbarAvatarElement.src = savedAvatar;
-            }
-        }
-
-        loadNavbarAvatar();
-
         window.addEventListener('storage', function(e) {
-            if (e.key === 'profileAvatar') {
-                loadNavbarAvatar();
+            if (e.key === 'coins') {
+                loadCoinsDisplay();
             }
         });
 

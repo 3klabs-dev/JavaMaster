@@ -172,16 +172,37 @@ copy in the browser.
 | Learn | which lessons are open | `GET /api/learn/path` |
 | A lesson | the questions, and the grading | `GET /api/learn/nodes/{id}`, `POST /api/learn/questions/{id}/check` |
 | Progress | XP, coins, streak, rank | `GET /api/me` |
-| Profile | XP, streak, rank | `GET /api/me` |
+| Profile | the whole profile: name, school, grade, avatar, XP, streak, rank, badges, joined date, best streak | `GET /api/me` |
 | Home, Shop | coins, inventory | `GET /api/me`, `GET /api/shop` |
+| Onboarding | writes the name, school and grade | `PATCH /api/me/profile` |
 
 Finishing a lesson posts to `POST /api/learn/nodes/{id}/complete`. The server
 pays the XP and coins, unlocks the next lesson and records the streak. Nothing
 is written to `localStorage` for any of that.
 
 The browser still keeps a few things of its own, because the server has no
-equivalent yet: the chosen avatar, the name, school and grade on the profile,
-the badge count, and the "repair notified today" flag.
+equivalent yet: the "repair notified today" flag, and the sound settings
+(background music and sound effects) that the lesson pages read before the
+first request comes back.
+
+### The profile belongs to the account
+
+The name, school, grade and chosen avatar live on the user row. The profile
+page reads them from `GET /api/me` and saves them with `PATCH /api/me/profile`.
+
+A field that is left out of the request stays as it is, and a field sent as an
+empty string is cleared. So the avatar can be changed on its own:
+
+```json
+{ "avatar": "/avatars/Avatar 5.png" }
+```
+
+The server only accepts an avatar the app ships with, so a bad path can never
+end up in the navbar of every page. The onboarding page saves the same three
+fields the same way.
+
+The avatar is written to `AvatarPath` on the user, and the navbar of every page
+reads it from `GET /api/me`.
 
 ---
 
@@ -327,7 +348,8 @@ Whitespace around a typed answer is ignored, so `"  double  "` is the same as
 
 | Method | Route | |
 |---|---|---|
-| GET | `/api/me` | the player: coins, XP, rank, streak, inventory |
+| GET | `/api/me` | the player: coins, XP, rank, streak, inventory, profile |
+| PATCH | `/api/me/profile` | save the name, school, grade or avatar |
 | GET | `/api/learn/path` | every node with its state: Completed, Unlocked or Locked |
 | GET | `/api/learn/nodes/{id}` | one node and its questions |
 | POST | `/api/learn/questions/{id}/check` | grade an answer |

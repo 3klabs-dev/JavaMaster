@@ -1,12 +1,16 @@
 // ===== PROFILE PAGE LOGIC =====
 // (dropdown, logout and notification badge live in profile-dropdown.js)
 
+// The profile belongs to the account, so it is read from the server and
+// written back to the server. Nothing about it is kept in the browser.
+
 // School database with branches
 const schoolDatabase = {
     "STI": ["Alabang Campus", "Bacoor Campus", "Calamba Campus", "Caloocan Campus", "Cavite Campus", "Cubao Campus", "Dasmarinas Campus", "Fairview Campus", "Las Piñas Campus", "Lipa Campus", "Lucena Campus", "Makati Campus", "Manila Campus", "Novaliches Campus", "Ortigas Campus", "Quezon Avenue Campus", "Recto Campus", "Rosario Campus", "San Fernando Pampanga Campus", "Sta. Rosa Campus", "Taft Campus"],
 };
 
-// Rank thresholds (same XP ranges as Progress.html)
+// Rank thresholds (the same XP ranges the server uses). These are only the
+// fallback for when the server cannot be reached.
 const ranks = [
     { min: 6500, name: 'Legend' },
     { min: 4500, name: 'Boss' },
@@ -18,17 +22,20 @@ const ranks = [
     { min: 0,    name: 'Starter' }
 ];
 
-// Load profile data
-let currentAvatar = localStorage.getItem('profileAvatar') || '/avatars/Avatar 1.png';
-let selectedAvatar = currentAvatar;
-let userName = localStorage.getItem('profileName') || localStorage.getItem('userName') || 'User01';
-let userSchool = localStorage.getItem('profileSchool') || 'Not set yet';
-let userGrade = localStorage.getItem('profileGrade') || 'Not set yet';
-let joinedDate = localStorage.getItem('joinedDate') || null;
-let bestStreak = parseInt(localStorage.getItem('bestStreak')) || 0;
-let badgeCount = parseInt(localStorage.getItem('badgeCount')) || 0;
+// The profile page owns the avatar: it sets the navbar itself after every save,
+// so the shared navbar sync in api.js keeps out of the way.
+window.JM_OWNS_AVATAR = true;
 
-// Load progress data. It comes from the server, so the profile can never show
+// The profile, exactly as the server has it
+let currentAvatar = '/avatars/Avatar 1.png';
+let selectedAvatar = currentAvatar;
+let userName = '';
+let userSchool = '';
+let userGrade = '';
+let joinedDate = null;
+let bestStreak = 0;
+
+// Progress data. It comes from the server, so the profile can never show
 // an XP or streak number the API disagrees with.
 let streakDays = 0;
 let totalXP = 0;
@@ -47,16 +54,15 @@ function getCurrentRank() {
 
 // "September 23, 2025" (also understands the older "23 Sep 2025" format)
 function formatJoinedDate(value) {
+    if (!value) return '';
     const date = new Date(value);
     if (isNaN(date)) return value;
     return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-function updateBestStreak() {
-    if (streakDays > bestStreak) {
-        bestStreak = streakDays;
-        localStorage.setItem('bestStreak', bestStreak);
-    }
+// A field that has not been filled in shows a placeholder, not an empty line.
+function orNotSet(value) {
+    return value || 'Not set yet';
 }
 
 function updateNavbarAvatar() {
@@ -68,24 +74,16 @@ function updateNavbarAvatar() {
 
 // Fill in everything on the profile view
 function initializeProfile() {
-    updateBestStreak();
     const rank = getCurrentRank();
-
-    // First visit: remember the join date
-    if (!joinedDate) {
-        joinedDate = new Date().toISOString();
-        localStorage.setItem('joinedDate', joinedDate);
-    }
 
     document.getElementById('profileAvatar').querySelector('img').src = currentAvatar;
     document.getElementById('profileName').textContent = userName;
-    document.getElementById('profileSchool').textContent = userSchool;
-    document.getElementById('profileGrade').textContent = userGrade;
+    document.getElementById('profileSchool').textContent = orNotSet(userSchool);
+    document.getElementById('profileGrade').textContent = orNotSet(userGrade);
     document.getElementById('joinedDate').textContent = formatJoinedDate(joinedDate);
 
     document.getElementById('rankTitle').textContent = rank.name;
     document.getElementById('rankIconProfile').src = rank.iconPath;
-    document.getElementById('badgeCount').textContent = badgeCount;
     document.getElementById('bestStreak').textContent = bestStreak + (bestStreak === 1 ? ' Day' : ' Days');
 
     updateNavbarAvatar();
@@ -109,6 +107,10 @@ document.querySelectorAll('.tab-btn').forEach(function (btn) {
 });
 
 // ===== Edit profile =====
+
+// The school list is fixed, but a learner can be at a school that is not on it
+// (the onboarding page lets them type one). A value that is not in the list is
+// added to it, so opening the edit view never quietly throws the school away.
 function populateSchoolDropdown() {
     const schoolSelect = document.getElementById('schoolInput');
     schoolSelect.innerHTML = '<option value="">Select school</option>';
@@ -121,6 +123,26 @@ function populateSchoolDropdown() {
             schoolSelect.appendChild(option);
         });
     });
+
+    if (userSchool && !Array.from(schoolSelect.options).some(function (o) { return o.value === userSchool; })) {
+        const option = document.createElement('option');
+        option.value = userSchool;
+        option.textContent = userSchool;
+        schoolSelect.appendChild(option);
+    }
+}
+
+// The grade list is fixed too, for the same reason.
+function populateGradeDropdown() {
+    const gradeSelect = document.getElementById('gradeInput');
+    const options = Array.from(gradeSelect.options).map(function (o) { return o.value; });
+
+    if (userGrade && options.indexOf(userGrade) === -1) {
+        const option = document.createElement('option');
+        option.value = userGrade;
+        option.textContent = userGrade;
+        gradeSelect.appendChild(option);
+    }
 }
 
 function showEditView() {
@@ -128,10 +150,11 @@ function showEditView() {
     document.querySelector('.edit-view').classList.add('active');
 
     populateSchoolDropdown();
+    populateGradeDropdown();
 
     document.getElementById('nameInput').value = userName;
-    document.getElementById('schoolInput').value = userSchool === 'Not set yet' ? '' : userSchool;
-    document.getElementById('gradeInput').value = userGrade === 'Not set yet' ? '' : userGrade;
+    document.getElementById('schoolInput').value = userSchool;
+    document.getElementById('gradeInput').value = userGrade;
     document.getElementById('editAvatar').querySelector('img').src = currentAvatar;
 }
 
@@ -140,31 +163,41 @@ function cancelEdit() {
     document.querySelector('.profile-view').classList.add('active');
 }
 
-function saveProfile() {
+async function saveProfile() {
     const name = document.getElementById('nameInput').value.trim();
     const school = document.getElementById('schoolInput').value;
     const grade = document.getElementById('gradeInput').value;
 
-    if (name && school && grade) {
-        userName = name;
-        userSchool = school;
-        userGrade = grade;
-
-        localStorage.setItem('profileName', userName);
-        localStorage.setItem('profileSchool', userSchool);
-        localStorage.setItem('profileGrade', userGrade);
-        localStorage.setItem('profileAvatar', currentAvatar);
-
-        document.getElementById('profileName').textContent = userName;
-        document.getElementById('profileSchool').textContent = userSchool;
-        document.getElementById('profileGrade').textContent = userGrade;
-        document.getElementById('profileAvatar').querySelector('img').src = currentAvatar;
-
-        updateNavbarAvatar();
-        cancelEdit();
-    } else {
+    if (!name || !school || !grade) {
         alert('Please fill in all fields');
+        return;
     }
+
+    // The server owns the profile, so the change is saved there first and the
+    // page only shows it once the server has taken it.
+    try {
+        const saved = await JM.saveProfile({
+            fullName: name,
+            school: school,
+            grade: grade,
+            avatar: currentAvatar
+        });
+        userName  = saved.fullName;
+        userSchool = saved.school ?? '';
+        userGrade  = saved.grade ?? '';
+        currentAvatar = saved.avatar ?? currentAvatar;
+    } catch (e) {
+        alert(e.message);
+        return;
+    }
+
+    document.getElementById('profileName').textContent = userName;
+    document.getElementById('profileSchool').textContent = orNotSet(userSchool);
+    document.getElementById('profileGrade').textContent = orNotSet(userGrade);
+    document.getElementById('profileAvatar').querySelector('img').src = currentAvatar;
+
+    updateNavbarAvatar();
+    cancelEdit();
 }
 
 // ===== Avatar modal =====
@@ -178,13 +211,20 @@ function closeAvatarModal() {
     document.getElementById('avatarModal').classList.remove('active');
 }
 
-function confirmAvatar() {
-    currentAvatar = selectedAvatar;
-    document.getElementById('editAvatar').querySelector('img').src = currentAvatar;
+async function confirmAvatar() {
+    const avatar = selectedAvatar;
 
-    // Save immediately and update every avatar on the page
-    localStorage.setItem('profileAvatar', currentAvatar);
+    try {
+        const saved = await JM.saveProfile({ avatar: avatar });
+        currentAvatar = saved.avatar ?? avatar;
+    } catch (e) {
+        alert(e.message);
+        return;
+    }
+
+    document.getElementById('editAvatar').querySelector('img').src = currentAvatar;
     document.getElementById('profileAvatar').querySelector('img').src = currentAvatar;
+
     updateNavbarAvatar();
 
     closeAvatarModal();
@@ -211,6 +251,14 @@ async function loadPlayer() {
         streakDays = me.streak ?? 0;
         totalXP = me.totalXp ?? 0;
         if (me.rank) rankInfo = { name: me.rank.name, icon: me.rank.icon };
+
+        userName   = me.fullName || '';
+        userSchool = me.school || '';
+        userGrade  = me.grade || '';
+        currentAvatar = me.avatar || currentAvatar;
+        selectedAvatar = currentAvatar;
+        joinedDate = me.joinedDate || null;
+        bestStreak = me.bestStreak ?? 0;
     } catch (e) {
         console.error('Could not load the player from the server', e);
     }

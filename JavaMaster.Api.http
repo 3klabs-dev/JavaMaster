@@ -4,6 +4,19 @@
 GET {{JavaMaster.Api_HostAddress}}/api/me
 Accept: application/json
 
+### Save the profile. A field that is left out stays as it is, and a field sent
+### as an empty string is cleared. The avatar must be one of the nine the app
+### ships with, e.g. "/avatars/Avatar 5.png".
+PATCH {{JavaMaster.Api_HostAddress}}/api/me/profile
+Content-Type: application/json
+
+{
+  "fullName": "Juan Dela Cruz",
+  "school": "STI - Dasmarinas Campus",
+  "grade": "2nd year, Information Technology",
+  "avatar": "/avatars/Avatar 5.png"
+}
+
 ### The learn path: every node and its state (Completed / Unlocked / Locked)
 GET {{JavaMaster.Api_HostAddress}}/api/learn/path
 Accept: application/json

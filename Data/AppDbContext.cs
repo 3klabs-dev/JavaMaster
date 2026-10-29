@@ -31,6 +31,9 @@ public class AppDbContext : DbContext
             e.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
             e.Property(u => u.Email).HasMaxLength(200);
             e.Property(u => u.MicrosoftObjectId).HasMaxLength(100);
+            e.Property(u => u.School).HasMaxLength(100);
+            e.Property(u => u.Grade).HasMaxLength(50);
+            e.Property(u => u.AvatarPath).HasMaxLength(100);
         });
 
         b.Entity<Question>(e =>

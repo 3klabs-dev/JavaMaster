@@ -144,12 +144,6 @@
             }
         });
 
-        function loadNavbarAvatar() {
-            const el = document.getElementById('navbarAvatar');
-            if (el) el.src = localStorage.getItem('profileAvatar') || '/avatars/Avatar 1.png';
-        }
-        loadNavbarAvatar();
-
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.removeItem('loggedInUsername');
             localStorage.removeItem('loggedInPassword');
@@ -301,7 +295,6 @@
         modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-        window.addEventListener('storage', e => { if (e.key === 'profileAvatar') loadNavbarAvatar(); });
         window.addEventListener('pageshow', e => { if (e.persisted) loadShop(); });
 
         loadShop();

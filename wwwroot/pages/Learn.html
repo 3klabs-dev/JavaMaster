@@ -209,15 +209,10 @@
         });
 
         /* ---------- Avatar ---------- */
-        function loadNavbarAvatar() {
-            const savedAvatar = localStorage.getItem('profileAvatar') || '/avatars/Avatar 1.png';
-            const el = document.getElementById('navbarAvatar');
-            if (el) el.src = savedAvatar;
-        }
-        loadNavbarAvatar();
+        // The chosen avatar belongs to the account, so js/api.js reads it from
+        // the server and puts it in the navbar.
 
         window.addEventListener('storage', function (e) {
-            if (e.key === 'profileAvatar') loadNavbarAvatar();
             if (e.key === 'coins' && typeof loadCoinsDisplay === 'function') loadCoinsDisplay();
         });
 
