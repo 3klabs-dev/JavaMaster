@@ -34,6 +34,7 @@
     var qIndex = 0;
     var phase = 'answer';   // 'answer' | 'correct' | 'wrong'
     var sel = null;         // selected option id (multiple choice)
+    var bugLine = null;     // the code line the learner picked (find the bug)
     var typed = '';         // free text (fill in the blank)
     var slots = {};         // slot id -> chosen token (fill slots / arrange tokens)
     var slotOrder = [];     // slot ids in the order they appear
@@ -99,6 +100,13 @@
         return q.payload || {};
     }
 
+    // The type of the question on screen, or null when there is none.
+    function qType() {
+        if (screen !== 'question') return null;
+        var q = questions[qIndex];
+        return q ? q.type : null;
+    }
+
     function slotsOf(p) {
         var p2 = p.lines || [];
         var ids = [];
@@ -144,6 +152,24 @@
         }).join('');
     }
 
+    /*
+      The code listing of a find-the-bug question. Every line is a button, and
+      the line number the learner picks is the number the server grades on, so
+      the lines are counted from 1.
+    */
+    function renderCode(lines) {
+        return lines.map(function (src, i) {
+            var n = i + 1;
+            var c = 'codeline';
+            if (bugLine === n && phase === 'correct') c += ' ok';
+            else if (bugLine === n && phase === 'wrong') c += ' bad';
+            else if (bugLine === n) c += ' sel';
+            return '<button class="' + c + '" ' + (phase !== 'answer' ? 'disabled' : '') +
+                ' data-bug-line="' + n + '"><span class="num">' + n + '</span>' +
+                '<span class="src">' + esc(src) + '</span></button>';
+        }).join('');
+    }
+
     function renderTemplate(template) {
         return template.map(function (tok) {
             var i = tok.indexOf('{{blank}}');
@@ -164,7 +190,7 @@
         }).join('');
     }
 
-    function workspace(inner, tools) {
+    function workspace(inner, tools, extraClass) {
         var out = (phase === 'correct' && serverOutput)
             ? '<div class="output"><div>Output</div><div>' + esc(serverOutput) + '</div></div>'
             : '';
@@ -172,7 +198,7 @@
             ? '<div class="tools"><button data-action="rem"><img src="/icons/remove.png" alt="">Remove</button>' +
               '<button data-action="reset"><img src="/icons/reset.png" alt="">Reset</button></div>'
             : (tools ? '<div class="tools"></div>' : '');
-        return '<div class="work"><div class="editor"><div class="tab"><img src="/icons/small size java logo.png" alt="">Main.java</div>' +
+        return '<div class="work' + (extraClass ? ' ' + extraClass : '') + '"><div class="editor"><div class="tab"><img src="/icons/small size java logo.png" alt="">Main.java</div>' +
             '<div class="code">' + inner + '</div>' + tl + '</div>' + out + '</div>';
     }
 
@@ -193,6 +219,9 @@
         // the middle of the screen. The finish screen keeps the top bar, so
         // the learner can still go back.
         st.classList.toggle('center', screen === 'done');
+        // A listing is taller than the other question bodies, so it starts a
+        // little higher and stays clear of the model in the corner.
+        st.classList.toggle('listing', screen === 'question' && qType() === 'FindBug');
 
         if (screen === 'question') {
             $('progress').innerHTML = questions.map(function (_, i) {
@@ -237,6 +266,10 @@
             }).join('') + '</div>';
         } else if (q.type === 'FillBlank') {
             body = workspace('<div class="line">' + renderTemplate(p.template || []) + '</div>', false);
+        } else if (q.type === 'FindBug') {
+            // The listing the learner reads. Which line has the bug is kept on
+            // the server, so it is never part of what the browser receives.
+            body = workspace(renderCode(p.code || []), false, 'listing');
         } else {
             // FillSlots and ArrangeTokens both fill marked places from a bank of tokens.
             body = workspace(renderLines(p.lines || []), true) +
@@ -340,9 +373,13 @@
         if (phase === 'correct') { b.textContent = 'Continue'; b.disabled = false; return; }
         if (phase === 'wrong') { b.textContent = 'Try Again'; b.disabled = false; return; }
         b.textContent = 'Check';
-        if (q.type === 'MultipleChoice') b.disabled = sel === null;
-        else if (q.type === 'FillBlank') b.disabled = !typed.trim();
-        else b.disabled = slotOrder.some(function (id) { return slots[id] === undefined; });
+        if (q.type === 'MultipleChoice') {
+            b.disabled = sel === null;
+        } else if (q.type === 'FindBug') {
+            b.disabled = bugLine === null;
+        } else if (q.type === 'FillBlank') {
+            b.disabled = !typed.trim();
+        } else b.disabled = slotOrder.some(function (id) { return slots[id] === undefined; });
     }
 
     function pick(id) {
@@ -350,6 +387,15 @@
         var opts = payloadOf(questions[qIndex]).options || [];
         document.querySelectorAll('.opt').forEach(function (o, k) {
             o.classList.toggle('sel', !!(opts[k] && opts[k].id === id));
+        });
+        upd();
+    }
+
+    // The learner picked the line they think has the bug.
+    function pickBug(line) {
+        bugLine = line;
+        document.querySelectorAll('.codeline').forEach(function (el) {
+            el.classList.toggle('sel', Number(el.dataset.bugLine) === line);
         });
         upd();
     }
@@ -375,6 +421,7 @@
         var q = questions[qIndex];
         if (q.type === 'MultipleChoice') return { optionId: sel };
         if (q.type === 'FillBlank') return { text: typed };
+        if (q.type === 'FindBug') return { lineNumber: bugLine };
         if (q.type === 'ArrangeTokens') {
             return { order: slotOrder.map(function (id) { return slots[id]; }) };
         }
@@ -423,6 +470,7 @@
         // Keep the typed text so a small slip does not have to be typed again,
         // but clear the choices so a wrong option is not simply left selected.
         if (q.type === 'MultipleChoice') sel = null;
+        if (q.type === 'FindBug') bugLine = null;
         if (q.type === 'FillSlots' || q.type === 'ArrangeTokens') slots = {};
         serverOutput = null;
         render();
@@ -434,6 +482,7 @@
         phase = 'answer';
         correcting = false;
         sel = null;
+        bugLine = null;
         typed = '';
         slots = {};
         serverOutput = null;
@@ -446,7 +495,7 @@
         qIndex = 0;
         phase = 'answer';
         correcting = false;
-        sel = null; typed = ''; slots = {}; serverOutput = null; lastMessage = '';
+        sel = null; bugLine = null; typed = ''; slots = {}; serverOutput = null; lastMessage = '';
         render();
     }
 
@@ -589,6 +638,7 @@
         var b = e.target.closest ? e.target.closest('button') : null;
         if (!b || b.disabled) return;
         if (b.dataset.opt) { pick(b.dataset.opt); return; }
+        if (b.dataset.bugLine !== undefined) { pickBug(Number(b.dataset.bugLine)); return; }
         if (b.dataset.token !== undefined) { addTok(b.dataset.token); return; }
         if (b.dataset.action === 'start') { startLesson(); return; }
         if (b.dataset.action === 'finishNext') { screen = 'done'; render(); return; }
@@ -600,6 +650,7 @@
     });
 
     window.pick = pick;
+    window.pickBug = pickBug;
     window.addTok = addTok;
     window.rem = rem;
     window.reset = reset;
