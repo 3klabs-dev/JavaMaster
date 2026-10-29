@@ -666,6 +666,7 @@
 
 
     <script src="/js/notification-manager.js"></script>
+    <script src="/js/api.js"></script>
     <script src="/js/coins-sync.js"></script>
     <script>
         // Dropdown functionality
@@ -689,20 +690,8 @@
         // ============================================
         // PROFILE AVATAR MANAGEMENT
         // ============================================
-        function loadNavbarAvatar() {
-            const savedAvatar = localStorage.getItem('profileAvatar') || '/avatars/Avatar 1.png';
-            const navbarAvatarElement = document.getElementById('navbarAvatar');
-            
-            if (navbarAvatarElement) {
-                navbarAvatarElement.src = savedAvatar;
-            }
-        }
-
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'profileAvatar') {
-                loadNavbarAvatar();
-            }
-        });
+        // The chosen avatar belongs to the account, so js/api.js reads it from
+        // the server and puts it in the navbar.
 
         // ============================================
         // USERNAME MANAGEMENT
@@ -912,7 +901,6 @@
         // INITIALIZE ON PAGE LOAD
         // ============================================
         window.addEventListener('DOMContentLoaded', function() {
-            loadNavbarAvatar();
             loadUsername();
             initializeAudioSettings();
             loadCoinsDisplay();

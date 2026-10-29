@@ -889,6 +889,7 @@
         <h1 class="outro-message" id="outroMessage">Thank you for choosing Java Master !</h1>
     </div>
 
+    <script src="/js/api.js"></script>
     <script>
         const heading = document.getElementById('heading');
         const nameInput = document.getElementById('nameInput');
@@ -1226,28 +1227,32 @@
         });
 
         // Reason proceed button
-        reasonProceedBtn.addEventListener('click', function() {
+        reasonProceedBtn.addEventListener('click', async function() {
             if (!this.disabled) {
                 console.log('Selected reason:', selectedReason);
 
-                // Save all onboarding data to localStorage
+                // The onboarding answers
                 const userName = nameInput.value.trim();
                 const yearLevel = document.getElementById('yearLevel').value;
                 const course = document.getElementById('course').value;
                 const school = schoolName.value;
                 const branchValue = branch.value;
 
-                // Save to localStorage
-                localStorage.setItem('profileName', userName);
+                // The profile belongs to the account, so it is saved on the
+                // server. An answer that was left blank is not sent, so it
+                // keeps whatever the account already had.
+                const profile = { fullName: userName };
                 if (yearLevel && course) {
-                    localStorage.setItem('profileGrade', `${yearLevel} year, ${course}`);
+                    profile.grade = `${yearLevel} year, ${course}`;
                 }
                 if (school) {
-                    if (branchValue) {
-                        localStorage.setItem('profileSchool', `${school} - ${branchValue}`);
-                    } else {
-                        localStorage.setItem('profileSchool', school);
-                    }
+                    profile.school = branchValue ? `${school} - ${branchValue}` : school;
+                }
+
+                try {
+                    await JM.saveProfile(profile);
+                } catch (e) {
+                    console.error('Could not save the profile', e);
                 }
 
                 // Mark onboarding as completed
