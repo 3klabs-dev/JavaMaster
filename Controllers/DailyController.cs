@@ -56,7 +56,10 @@ public class DailyController : ControllerBase
         if (req.Answer.ValueKind == JsonValueKind.Undefined)
             return BadRequest(new { error = "Missing answer." });
 
-        var user = await _me.GetAsync();
+        // The daily reward changes coins and XP, so it uses the same per-player
+        // lock as a purchase or a lesson completion.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        var user = await UserRowLock.AcquireAsync(_db, _me);
         var today = StreakService.Today();
 
         if (await _db.UserDailyChallenges.AnyAsync(d => d.UserId == user.Id && d.Date == today))
@@ -75,6 +78,7 @@ public class DailyController : ControllerBase
         if (!correct)
         {
             await _db.SaveChangesAsync();
+            await tx.CommitAsync();
             return Ok(new { correct = false, message = q.Explanation });
         }
 
@@ -93,7 +97,7 @@ public class DailyController : ControllerBase
             UserId = user.Id, Date = today, QuestionId = q.Id
         });
 
-        try { await _db.SaveChangesAsync(); }
+        try { await _db.SaveChangesAsync(); await tx.CommitAsync(); }
         catch (DbUpdateException)   // a double click or a second tab got there first
         {
             return Conflict(new { error = "Challenge already completed today." });

@@ -1,3 +1,4 @@
+using JavaMaster.Api.Converters;
 using JavaMaster.Api.Data;
 using JavaMaster.Api.Services;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,11 @@ builder.Services.AddDbContext<AppDbContext>(o =>
     builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddControllers()
-    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        o.JsonSerializerOptions.Converters.Add(new UtcDateTimeJsonConverter());
+    });
 
 builder.Services.AddOpenApi();
 
@@ -51,6 +56,59 @@ using (var scope = app.Services.CreateScope())
         return;
     }
 }
+
+// Any unexpected exception is logged with its trace id, and the browser gets a
+// small JSON error instead of a stack trace or an empty 500 page.
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+    {
+        // The learner closed the tab. There is nobody left to answer.
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Unhandled exception. TraceId: {TraceId}", context.TraceIdentifier);
+
+        // Once bytes are on the wire the response cannot be replaced.
+        if (context.Response.HasStarted) throw;
+
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsJsonAsync(new
+        {
+            error = "Something went wrong.",
+            traceId = context.TraceIdentifier
+        });
+    }
+});
+
+// Actions that return a bare NotFound() (or another empty 4xx) get the same
+// { error } shape as the rest of the API, so the frontend always has a message.
+app.UseStatusCodePages(async statusCodeContext =>
+{
+    var context = statusCodeContext.HttpContext;
+    if (!context.Request.Path.StartsWithSegments("/api")) return;
+
+    var message = context.Response.StatusCode switch
+    {
+        400 => "Bad request.",
+        401 => "Please sign in.",
+        403 => "You do not have access.",
+        404 => "Not found.",
+        405 => "Method not allowed.",
+        _   => "Request failed."
+    };
+
+    await context.Response.WriteAsJsonAsync(new
+    {
+        error = message,
+        traceId = context.TraceIdentifier
+    });
+});
 
 if (app.Environment.IsDevelopment())
 {

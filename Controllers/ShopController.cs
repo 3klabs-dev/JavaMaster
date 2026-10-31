@@ -48,7 +48,11 @@ public class ShopController : ControllerBase
         var item = await _db.ShopItems.FirstOrDefaultAsync(s => s.Code == req.Code && s.IsActive);
         if (item == null) return NotFound(new { error = "Item not found." });
 
-        var user = await _me.GetAsync();
+        // Every purchase for one player runs one at a time. Without this, two
+        // purchases can read the same coin total and only one charge is saved.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        var user = await UserRowLock.AcquireAsync(_db, _me);
+
         var price = req.PackSize == 5 ? item.Price5Pack : item.Price10Pack;
         if (user.Coins < price)
             return BadRequest(new { error = "Not enough coins.", needed = price, coins = user.Coins });
@@ -71,6 +75,7 @@ public class ShopController : ControllerBase
             PackSize = req.PackSize, Quantity = req.PackSize, TotalPrice = price
         });
         await _db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         return Ok(new { code = item.Code, owned = inv.Quantity, coins = user.Coins, spent = price });
     }

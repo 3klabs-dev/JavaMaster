@@ -16,11 +16,7 @@ public class TopicsController : ControllerBase
     public async Task<ActionResult<List<Topic>>> GetAll() =>
         await _db.Topics.Where(t => t.IsActive).ToListAsync();
 
-    [HttpPost]
-    public async Task<ActionResult<Topic>> Create(Topic topic)
-    {
-        _db.Topics.Add(topic);
-        await _db.SaveChangesAsync();
-        return Ok(topic);
-    }
+    // Creating a topic is intentionally not exposed yet. There is no login, so a
+    // public POST would let any visitor add topics. It comes back when there is
+    // an admin account to protect it.
 }

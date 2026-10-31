@@ -374,7 +374,13 @@ Whitespace around a typed answer is ignored, so `"  double  "` is the same as
 | GET | `/api/shop` | shop items and how many are owned |
 | POST | `/api/shop/buy` | buy an item |
 | POST | `/api/streak/repair` | use a streak repair |
-| GET/POST | `/api/topics` | topics |
+| GET | `/api/topics` | topics |
+
+Creating a topic is not exposed yet: without login, a public POST would let any
+visitor add topics. It returns when there is an admin account to protect it.
+
+All timestamps in responses are UTC and end in `Z`, so the browser shows the
+correct local date and time.
 
 ---
 

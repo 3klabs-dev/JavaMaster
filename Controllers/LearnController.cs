@@ -17,26 +17,44 @@ public class LearnController : ControllerBase
 
     public record AnswerRequest(int NodeId, JsonElement Answer);
 
-    // Finds a node, whether this user may play it, and which node comes next.
+    // The ids of every node that has at least one active question. A node with no
+    // questions is a placeholder: it cannot be played and it must not block the
+    // node behind it.
+    private async Task<HashSet<int>> PlayableNodeIdsAsync() =>
+        (await _db.NodeQuestions
+            .Where(nq => nq.Question!.IsActive)
+            .Select(nq => nq.LearnNodeId).Distinct().ToListAsync()).ToHashSet();
+
+    // Finds a node, whether this user may play it, and which playable node comes next.
     private async Task<(LearnNode? node, bool unlocked, LearnNode? next)> Locate(int userId, int nodeId)
     {
+        // Only published sections are part of the path, so a node in a hidden
+        // section cannot be reached by asking for its id directly.
         var all = await _db.LearnNodes
+            .Where(n => n.LearnSection!.IsPublished)
             .OrderBy(n => n.LearnSection!.SortOrder).ThenBy(n => n.SortOrder)
             .ToListAsync();
         var i = all.FindIndex(n => n.Id == nodeId);
         if (i < 0) return (null, false, null);
+
+        var playable = await PlayableNodeIdsAsync();
 
         // Walk back to the nearest previous node that actually has questions.
         // Placeholder nodes with no questions do not lock the ones behind them.
         var previous = -1;
         for (var p = i - 1; p >= 0; p--)
         {
-            if (await _db.NodeQuestions.AnyAsync(nq => nq.LearnNodeId == all[p].Id && nq.Question!.IsActive)) { previous = p; break; }
+            if (playable.Contains(all[p].Id)) { previous = p; break; }
         }
 
-        var unlocked = i == 0 || previous < 0 || await _db.UserNodeProgress.AnyAsync(p =>
+        var unlocked = previous < 0 || await _db.UserNodeProgress.AnyAsync(p =>
             p.UserId == userId && p.LearnNodeId == all[previous].Id && p.Status == ProgressStatus.Completed);
-        return (all[i], unlocked, i + 1 < all.Count ? all[i + 1] : null);
+
+        // "Next" means the next node the learner can actually play, not simply
+        // the next row. Otherwise a placeholder would be reported as the next
+        // lesson even though the path shows it as locked.
+        var next = all.Skip(i + 1).FirstOrDefault(n => playable.Contains(n.Id));
+        return (all[i], unlocked, next);
     }
 
     // Does this node have a question the learner can actually be asked? A node
@@ -67,9 +85,7 @@ public class LearnController : ControllerBase
         // Nodes that have no questions yet are placeholders. They must not block
         // the node after them, otherwise an unfinished placeholder would lock the
         // rest of the path for good.
-        var withQuestions = await _db.NodeQuestions
-            .Where(nq => nq.Question!.IsActive)
-            .Select(nq => nq.LearnNodeId).Distinct().ToListAsync();
+        var withQuestions = await PlayableNodeIdsAsync();
 
         var prevDone = true;   // the very first node starts unlocked
         var output = new List<object>();
@@ -102,7 +118,7 @@ public class LearnController : ControllerBase
     {
         var user = await _me.GetAsync();
         var (node, unlocked, _) = await Locate(user.Id, nodeId);
-        if (node == null) return NotFound();
+        if (node == null) return NotFound(new { error = "Lesson not found." });
         if (!unlocked) return StatusCode(403, new { error = "This node is locked." });
 
         // A node with no questions has nothing to play. The path reports it as
@@ -141,7 +157,7 @@ public class LearnController : ControllerBase
 
         var user = await _me.GetAsync();
         var (node, unlocked, _) = await Locate(user.Id, req.NodeId);
-        if (node == null) return NotFound();
+        if (node == null) return NotFound(new { error = "Lesson not found." });
         if (!unlocked) return StatusCode(403, new { error = "This node is locked." });
 
         var inNode = await _db.NodeQuestions
@@ -149,7 +165,7 @@ public class LearnController : ControllerBase
         if (!inNode) return BadRequest(new { error = "Question is not part of this node." });
 
         var q = await _db.Questions.FindAsync(questionId);
-        if (q == null) return NotFound();
+        if (q == null) return NotFound(new { error = "Question not found." });
 
         var correct = AnswerChecker.IsCorrect(q, req.Answer);
         _db.QuestionAttempts.Add(new QuestionAttempt
@@ -174,9 +190,13 @@ public class LearnController : ControllerBase
     [HttpPost("nodes/{nodeId}/complete")]
     public async Task<IActionResult> Complete(int nodeId)
     {
-        var user = await _me.GetAsync();
+        // One completion per player at a time, so a double-click cannot pay the
+        // same lesson twice or insert the same badge twice.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        var user = await UserRowLock.AcquireAsync(_db, _me);
+
         var (node, unlocked, next) = await Locate(user.Id, nodeId);
-        if (node == null) return NotFound();
+        if (node == null) return NotFound(new { error = "Lesson not found." });
         if (!unlocked) return StatusCode(403, new { error = "This node is locked." });
 
         var questionIds = await _db.NodeQuestions
@@ -191,6 +211,29 @@ public class LearnController : ControllerBase
         var correctIds = await _db.QuestionAttempts
             .Where(a => a.UserId == user.Id && a.LearnNodeId == nodeId && a.IsCorrect && a.CreatedAt > since)
             .Select(a => a.QuestionId).Distinct().ToListAsync();
+
+        // A double-clicked Finish button, or a retry after a dropped response,
+        // arrives with no new answers and a node that is already complete. Reply
+        // with the normal "replay" payload instead of failing or paying again.
+        if (progress?.Status == ProgressStatus.Completed && correctIds.Count == 0)
+        {
+            var ranksNow = await _db.Ranks.ToListAsync();
+            var rankNow = RankCalculator.For(user.TotalXp, ranksNow);
+            return Ok(new
+            {
+                xpBefore = user.TotalXp, xpAfter = user.TotalXp, xpEarned = 0,
+                rankBefore = rankNow.Name, rankAfter = rankNow.Name,
+                rankIcon = "/rank titles/" + rankNow.IconFile,
+                rankMinXp = rankNow.RankMinXp, rankMaxXp = rankNow.RankMaxXp,
+                coinsEarned = 0, streakBonus = 0, coinsTotal = user.Coins,
+                badgeEarned = false, firstTime = false,
+                title = node.Title,
+                streak = user.CurrentStreak,
+                nextNodeId = next?.Id,
+                outroText = node.OutroText
+            });
+        }
+
         if (questionIds.Any(id => !correctIds.Contains(id)))
             return BadRequest(new { error = "Answer every question correctly first." });
 
@@ -229,6 +272,7 @@ public class LearnController : ControllerBase
         progress.TimesCompleted++;
         progress.LastPlayedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         var rankAfter = RankCalculator.For(user.TotalXp, ranks);
         return Ok(new

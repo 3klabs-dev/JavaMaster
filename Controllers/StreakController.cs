@@ -17,7 +17,10 @@ public class StreakController : ControllerBase
     [HttpPost("repair")]
     public async Task<IActionResult> Repair()
     {
-        var user = await _me.GetAsync();
+        // Consuming a repair also changes the player row, so it waits for any
+        // other coin/XP change for the same player to finish first.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        var user = await UserRowLock.AcquireAsync(_db, _me);
         var today = StreakService.Today();
 
         // Only possible when the last active day was the day before yesterday
@@ -32,6 +35,7 @@ public class StreakController : ControllerBase
         inv.Quantity--;
         user.LastActivityDate = today.AddDays(-1);   // the missed day is now covered
         await _db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         // The next completed activity today makes the streak one higher (14 becomes 15)
         return Ok(new { streak = user.CurrentStreak, repairsLeft = inv.Quantity });
