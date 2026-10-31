@@ -39,6 +39,11 @@ public class LearnController : ControllerBase
         return (all[i], unlocked, i + 1 < all.Count ? all[i + 1] : null);
     }
 
+    // Does this node have a question the learner can actually be asked? A node
+    // without one is a placeholder and cannot be played.
+    private async Task<bool> HasQuestions(int nodeId) =>
+        await _db.NodeQuestions.AnyAsync(nq => nq.LearnNodeId == nodeId && nq.Question!.IsActive);
+
     [HttpGet("path")]
     public async Task<IActionResult> GetPath()
     {
@@ -74,9 +79,18 @@ public class LearnController : ControllerBase
             foreach (var n in s.Nodes)
             {
                 var isDone = done.Contains(n.Id);
-                var status = isDone ? "Completed" : prevDone ? "Unlocked" : "Locked";
+                var playable = withQuestions.Contains(n.Id);
+
+                // A node with no questions is a placeholder. It cannot be played,
+                // so it is reported as locked - otherwise the learner would be
+                // sent to a lesson that has nothing in it. It still does not
+                // block the nodes behind it.
+                var status = !playable ? "Locked"
+                           : isDone ? "Completed"
+                           : prevDone ? "Unlocked" : "Locked";
+
                 nodes.Add(new { n.Id, n.Title, n.Subtitle, n.NodeType, status, n.XpReward, n.CoinReward });
-                if (withQuestions.Contains(n.Id)) prevDone = isDone;
+                if (playable) prevDone = isDone;
             }
             output.Add(new { s.Id, s.Title, s.IsPublished, nodes });
         }
@@ -90,6 +104,12 @@ public class LearnController : ControllerBase
         var (node, unlocked, _) = await Locate(user.Id, nodeId);
         if (node == null) return NotFound();
         if (!unlocked) return StatusCode(403, new { error = "This node is locked." });
+
+        // A node with no questions has nothing to play. The path reports it as
+        // locked, so this only answers a direct request - but it must never
+        // hand the browser an empty lesson.
+        if (!await HasQuestions(nodeId))
+            return NotFound(new { error = "This lesson has no questions yet." });
 
         // AnswerKey, Explanation and Hint are never selected here.
         var questions = await _db.NodeQuestions
@@ -162,7 +182,7 @@ public class LearnController : ControllerBase
         var questionIds = await _db.NodeQuestions
             .Where(nq => nq.LearnNodeId == nodeId && nq.Question!.IsActive).Select(nq => nq.QuestionId).ToListAsync();
         if (questionIds.Count == 0)
-            return BadRequest(new { error = "This node has no questions yet." });
+            return BadRequest(new { error = "This lesson has no questions yet." });
 
         // Only answers given since the last completion count, so a replay must be played again.
         var progress = await _db.UserNodeProgress.FindAsync(user.Id, nodeId);
