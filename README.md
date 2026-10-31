@@ -296,6 +296,21 @@ the completed screen.
 A lesson can only be rewarded once. Replaying it still means answering every
 question again, but it pays no XP and no coins, so nobody can farm a lesson.
 
+### A node with no questions is locked
+
+A node that has no questions yet — a placeholder — cannot be played. So:
+
+- `GET /api/learn/path` reports it as **Locked**, the same as a node the
+  learner has not reached yet. The learn page draws the padlock and refuses
+  to open it. It still does not block the nodes behind it.
+- `GET /api/learn/nodes/{id}` answers **404 "This lesson has no questions
+  yet."** rather than handing the browser an empty lesson, which the lesson
+  engine cannot render.
+
+Nothing about this is hardcoded. Both answers are worked out from the
+questions in the database, so the moment a node is given questions it opens
+up on its own, with no code change and no migration.
+
 ### The correction never gives the answer away
 
 The feedback on a wrong answer points at the rule rather than naming the
@@ -404,7 +419,8 @@ wwwroot/               the whole frontend, no build step
 
 - **No real login.** Every request is Test Student.
 - **Three lessons have no questions yet** — `Java Basics 1`, `Java Basics 2` and
-  `Test`. They are placeholders and do not block the lessons behind them.
+  `Test`. They are placeholders: they are reported as locked and they do not
+  block the lessons behind them.
 - **Some screens are not built yet** and their links lead nowhere:
   `Study.html`, `Modules.html`, `My level.html`, `overview.html`,
   `Practice 1.html`, `Practice 2.html`, `Test 1.html`, `View course.html`,
