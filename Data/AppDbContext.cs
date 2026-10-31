@@ -42,6 +42,17 @@ public class AppDbContext : DbContext
             e.Property(q => q.Purpose).HasConversion<string>().HasMaxLength(20);
             // Content that comes from the code carries a key, so it can only be seeded once.
             e.HasIndex(q => q.Code).IsUnique().HasFilter("[Code] IS NOT NULL");
+            // The daily challenge finds the active daily questions in one pass.
+            e.HasIndex(q => new { q.Purpose, q.IsActive });
+        });
+
+        b.Entity<QuestionAttempt>(e =>
+        {
+            // Finishing a lesson asks for this player's correct answers in this
+            // node since the last play. The included QuestionId keeps the query
+            // covered by the index instead of looking the table up again.
+            e.HasIndex(a => new { a.UserId, a.LearnNodeId, a.IsCorrect, a.CreatedAt })
+                .IncludeProperties(a => a.QuestionId);
         });
 
         b.Entity<LearnNode>(e =>
@@ -79,6 +90,12 @@ public class AppDbContext : DbContext
         b.Entity<UserDailyChallenge>(e =>
         {
             e.HasKey(x => new { x.UserId, x.Date });   // one row per player per day
+        });
+
+        b.Entity<Purchase>(e =>
+        {
+            // Purchase history belongs to one player, so this keeps that read cheap.
+            e.HasIndex(p => p.UserId);
         });
     }
 }

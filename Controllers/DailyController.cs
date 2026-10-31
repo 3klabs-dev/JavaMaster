@@ -3,6 +3,7 @@ using JavaMaster.Api.Data;
 using JavaMaster.Api.Entities;
 using JavaMaster.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace JavaMaster.Api.Controllers;
@@ -97,9 +98,14 @@ public class DailyController : ControllerBase
             UserId = user.Id, Date = today, QuestionId = q.Id
         });
 
-        try { await _db.SaveChangesAsync(); await tx.CommitAsync(); }
-        catch (DbUpdateException)   // a double click or a second tab got there first
+        try
         {
+            await _db.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+        catch (DbUpdateException ex) when (IsDuplicateDailyChallenge(ex))
+        {
+            // A double click or a second tab got there first.
             return Conflict(new { error = "Challenge already completed today." });
         }
 
@@ -120,4 +126,16 @@ public class DailyController : ControllerBase
             }
         });
     }
+
+    // A duplicate primary key on UserDailyChallenges is the only expected
+    // failure here: two tabs finished the same challenge at the same time.
+    // Any other database error is a real problem and must reach the global
+    // error handler instead of being reported as "already completed".
+    //
+    // SQL Server numbers: 2601 = duplicate key in a unique index,
+    //                     2627 = duplicate key that violates a constraint.
+    private static bool IsDuplicateDailyChallenge(DbUpdateException ex) =>
+        ex.Entries.Any(e => e.Entity is UserDailyChallenge) &&
+        ex.GetBaseException() is SqlException sql &&
+        sql.Number is 2601 or 2627;
 }

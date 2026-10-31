@@ -141,6 +141,8 @@ namespace JavaMaster.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("Purchases");
                 });
 
@@ -206,6 +208,8 @@ namespace JavaMaster.Api.Migrations
 
                     b.HasIndex("TopicId");
 
+                    b.HasIndex("Purpose", "IsActive");
+
                     b.ToTable("Questions");
                 });
 
@@ -237,6 +241,10 @@ namespace JavaMaster.Api.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId", "LearnNodeId", "IsCorrect", "CreatedAt");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "LearnNodeId", "IsCorrect", "CreatedAt"), new[] { "QuestionId" });
 
                     b.ToTable("QuestionAttempts");
                 });

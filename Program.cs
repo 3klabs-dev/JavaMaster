@@ -11,6 +11,12 @@ builder.Services.AddDbContext<AppDbContext>(o =>
     builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(o =>
+    {
+        // Keep bad request bodies in the same { error } shape as every other
+        // API error, so the frontend can show a real message.
+        o.InvalidModelStateResponseFactory = ApiValidation.InvalidModelState;
+    })
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
