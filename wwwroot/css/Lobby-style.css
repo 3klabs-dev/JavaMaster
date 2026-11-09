@@ -163,6 +163,10 @@ body {
 }
 
 .enter-code-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
     position: absolute;
     left: calc(27 * var(--u));
     bottom: calc(33 * var(--u));
@@ -217,6 +221,10 @@ body {
 }
 
 .create-deck-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
     margin-top: calc(28 * var(--u));
     height: calc(60 * var(--u));
     padding: 0 calc(43 * var(--u));

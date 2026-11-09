@@ -1,4 +1,5 @@
 using JavaMaster.Api.Entities;
+using JavaMaster.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace JavaMaster.Api.Data;
@@ -21,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<Purchase> Purchases => Set<Purchase>();
     public DbSet<UserDailyChallenge> UserDailyChallenges => Set<UserDailyChallenge>();
     public DbSet<UserBadge> UserBadges => Set<UserBadge>();
+    public DbSet<Deck> Decks => Set<Deck>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -96,6 +98,16 @@ public class AppDbContext : DbContext
         {
             // Purchase history belongs to one player, so this keeps that read cheap.
             e.HasIndex(p => p.UserId);
+        });
+
+        b.Entity<Deck>(e =>
+        {
+            e.Property(d => d.Name).HasMaxLength(GameRules.DeckNameMaxLength);
+            e.Property(d => d.Description).HasMaxLength(GameRules.DeckDescriptionMaxLength);
+            // OwnerUserId is the foreign key; without this EF would add a second,
+            // shadow OwnerId column and point the FK at that instead.
+            e.HasOne(d => d.Owner).WithMany().HasForeignKey(d => d.OwnerUserId);
+            e.HasIndex(d => d.OwnerUserId);
         });
     }
 }

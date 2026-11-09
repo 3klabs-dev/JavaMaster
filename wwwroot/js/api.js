@@ -20,7 +20,8 @@ const JM = {
     daily:       ()               => api('/daily'),
     dailyAnswer: (answer)         => api('/daily/answer', { method: 'POST', body: JSON.stringify({ answer }) }),
     repair:      ()               => api('/streak/repair', { method: 'POST' }),
-    saveProfile: (profile)        => api('/me/profile', { method: 'PATCH', body: JSON.stringify(profile) })
+    saveProfile: (profile)        => api('/me/profile', { method: 'PATCH', body: JSON.stringify(profile) }),
+    createDeck:  (deck)           => api('/decks', { method: 'POST', body: JSON.stringify(deck) })
 };
 
 /*
