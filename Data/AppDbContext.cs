@@ -104,6 +104,8 @@ public class AppDbContext : DbContext
         {
             e.Property(d => d.Name).HasMaxLength(GameRules.DeckNameMaxLength);
             e.Property(d => d.Description).HasMaxLength(GameRules.DeckDescriptionMaxLength);
+            e.Property(d => d.Share).HasMaxLength(10);
+            e.Property(d => d.Cards).HasColumnType("nvarchar(max)");
             // OwnerUserId is the foreign key; without this EF would add a second,
             // shadow OwnerId column and point the FK at that instead.
             e.HasOne(d => d.Owner).WithMany().HasForeignKey(d => d.OwnerUserId);

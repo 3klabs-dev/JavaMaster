@@ -258,7 +258,7 @@ async function loadPlayer() {
         currentAvatar = me.avatar || currentAvatar;
         selectedAvatar = currentAvatar;
         joinedDate = me.joinedDate || null;
-        bestStreak = me.bestStreak ?? 0;
+        bestStreak = Math.max(me.bestStreak ?? 0, me.streak ?? 0);
     } catch (e) {
         console.error('Could not load the player from the server', e);
     }

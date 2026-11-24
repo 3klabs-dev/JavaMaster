@@ -100,8 +100,7 @@
 
         <h1 class="page-title">Progress</h1>
 
-        <!-- Streak card -->
-        <section class="streak-card">
+        <section class="streak-card" id="streakCard">
             <img id="coffeeIcon" src="/images/cup no streak.png" alt="cup of coffee" class="coffee-icon">
 
             <h2 class="streak-title">Streak<br>days</h2>
@@ -114,20 +113,31 @@
             <!-- Streak Repair pill: 4 states set by JS (alive / ready / shop / late) -->
             <button type="button" class="repair-pill" id="repairPill" data-state="loading">
                 <img src="/icons/kettle.png" alt="streak repair" class="repair-icon">
-                <span class="repair-label is-hidden" id="repairLabel">Repair -day streak</span>
                 <span class="repair-count" id="repairCount">-</span>
             </button>
+
+            <div class="week-tracker" id="weekTracker" role="list" aria-label="This week"></div>
 
             <div class="streak-bar">
                 <div class="streak-fill" id="streakProgress" style="width: 0%"></div>
             </div>
-            <span class="streak-label" id="streakLabel">0/100 days</span>
+            <span class="streak-label" id="streakLabel">0 / 7 days</span>
 
-            <p class="start-streak-text">Start your streak with:</p>
+            <p class="streak-status">
+                <span class="status-icon" id="statusIcon" aria-hidden="true"></span>
+                <span id="statusText">Play today to start your streak.</span>
+            </p>
 
-            <a href="Learn.html" class="streak-btn learn-btn">Learn</a>
-            <a href="Multiplayer.html" class="streak-btn multiplayer-btn">Multiplayer</a>
-            <a href="Daily Challenges.html" class="streak-btn daily-btn">Daily Challenges</a>
+            <!-- The same hooks as the sidebar Study button: href + .study-button -->
+            <a href="Study.html" class="study-today-btn study-button" id="studyTodayBtn">
+                <img src="/icons/game console.png" alt="">
+                Study today
+            </a>
+
+            <p class="streak-timer">
+                <span class="timer-icon" aria-hidden="true"></span>
+                <span id="timerText"></span>
+            </p>
         </section>
 
         <!-- Rank card -->
@@ -159,7 +169,14 @@
     </div>
 
     <!-- Toast (repair tips + "Streak restored") -->
-    <div class="toast is-hidden" id="toast" role="status"></div>
+    <div class="toast is-hidden" id="toast" role="status" aria-live="polite">
+        <img class="toast-icon" id="toastIcon" src="/icons/kettle.png" alt="">
+        <div class="toast-body">
+            <strong class="toast-title" id="toastTitle"></strong>
+            <span class="toast-msg" id="toastMsg"></span>
+        </div>
+        <button type="button" class="toast-close" id="toastClose" aria-label="Close">&times;</button>
+    </div>
 
 
     <!-- ============================================================
@@ -200,15 +217,58 @@
         let totalXP = 0;
         let rankInfo = { name: 'Starter', minXp: 0, maxXp: 300, icon: '/rank titles/starter.png' };
         let activeToday = false;
+        let serverToday = null;        // yyyy-MM-dd in Philippine time
+        let secondsUntilReset = null;  // until the next streak day
+        let streakGoal = 7;            // the next milestone the bar fills toward
+        let resetAt = 0;
+
+        const WEEK_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+        const MILESTONES = [7, 14, 30, 60, 100];
 
         function getCurrentRank() {
             return { name: rankInfo.name, xpRange: [rankInfo.minXp, rankInfo.maxXp], iconPath: rankInfo.icon };
         }
 
+        function renderWeek(streak, playedToday, today) {
+            const box = document.getElementById('weekTracker');
+            if (!today) { box.innerHTML = ''; return; }
+            const parsed = new Date(today + 'T00:00:00Z');
+            if (isNaN(parsed)) { box.innerHTML = ''; return; }
+
+            // Weekday of the SERVER date, Mon = 0 ... Sun = 6
+            const todayIdx = (parsed.getUTCDay() + 6) % 7;
+            const lastDone = playedToday ? todayIdx : todayIdx - 1;
+            const firstDone = lastDone - streak + 1;
+
+            box.innerHTML = '';
+            ['M','T','W','T','F','S','S'].forEach(function(letter, i) {
+                let state = '';
+                if (streak > 0 && i >= firstDone && i <= lastDone) state = 'done';
+                if (i === todayIdx) state = playedToday ? 'today-done' : 'today';
+                else if (playedToday && i === todayIdx + 1) state = 'next';
+
+                const dot = document.createElement('span');
+                dot.className = 'day-dot ' + state;
+                dot.setAttribute('role', 'listitem');
+                dot.setAttribute('aria-label', WEEK_DAYS[i] +
+                    (state === 'done' || state === 'today-done' ? ', done' : state === 'today' ? ', play today' : ''));
+                dot.textContent = state === 'today-done' ? '✓' : letter;
+                box.appendChild(dot);
+            });
+        }
+
+        function updateTimer() {
+            const el = document.getElementById('timerText');
+            if (!resetAt) { el.textContent = ''; return; }
+            const mins = Math.max(0, Math.floor((resetAt - Date.now()) / 60000));
+            el.textContent = `Next streak day in ${Math.floor(mins / 60)}h ${mins % 60}m`;
+        }
+        setInterval(updateTimer, 30000);
+
         function updateCoffeeIcon() {
             const coffeeIcon = document.getElementById('coffeeIcon');
 
-            // Steaming cup while the streak is alive, cold cup once it has lapsed.
+            // Steaming cup once today is counted, cold cup before that.
             if (activeToday || streakDays > 0) {
                 coffeeIcon.src = '/images/coffee streak.gif';
             } else {
@@ -219,17 +279,31 @@
         function updateUI() {
             const currentLevel = getCurrentRank();
             const xpProgress = ((totalXP - currentLevel.xpRange[0]) / (currentLevel.xpRange[1] - currentLevel.xpRange[0])) * 100;
-            const streakProgress = (streakDays / 100) * 100;
 
-            // Streak: number in the badge, progress bar and "x/100 days" label
-            // (the "started" class gives the bar a small minimum width once the streak has begun)
+            // Streak: the bar fills toward the next milestone (7, 14, 30, 60, 100)
+            streakGoal = MILESTONES.find(m => m > streakDays) || streakDays || 7;
             const streakFill = document.getElementById('streakProgress');
             document.getElementById('streakNumber').textContent = streakDays;
-            document.getElementById('streakLabel').textContent = `${streakDays}/100 days`;
-            streakFill.style.width = Math.min(streakProgress, 100) + '%';
+            document.getElementById('streakLabel').textContent = `${streakDays} / ${streakGoal} days`;
+            streakFill.style.width = (streakDays / streakGoal * 100) + '%';
             streakFill.classList.toggle('started', streakDays > 0);
 
+            // Played today vs not
+            document.getElementById('streakCard').classList.toggle('is-played', activeToday);
             updateCoffeeIcon();
+            document.getElementById('statusIcon').textContent = activeToday ? '✓' : '';
+            document.getElementById('statusText').textContent = activeToday
+                ? `Counted today. Come back tomorrow to reach day ${streakDays + 1}.`
+                : (repairInfo && repairInfo.canRepair)
+                    ? `Use a streak repair to bring back your ${repairInfo.lostStreak}-day streak.`
+                    : streakDays > 0
+                        ? `Play today to keep your streak and reach day ${streakDays + 1}.`
+                        : 'Play today to start your streak.';
+
+            renderWeek(streakDays, activeToday, serverToday);
+            resetAt = secondsUntilReset != null ? Date.now() + secondsUntilReset * 1000 : 0;
+            updateTimer();
+
             updateRepairPill();
 
             // Rank: name ("Starter"), XP pill ("50/180 XP"), XP bar and rank icon
@@ -267,32 +341,41 @@
 
         function updateRepairPill() {
             const state = getRepairState();
-            const pill = document.getElementById('repairPill');
-            const label = document.getElementById('repairLabel');
-            let text = '';
-
-            if (state === 'ready') text = `Repair ${repairInfo.lostStreak}-day streak`;
-            if (state === 'shop') text = 'Get a Streak Repair';
-
-            pill.dataset.state = state;
-            if (text) label.textContent = text;
-            label.classList.toggle('is-hidden', text === '');
             const count = repairInfo ? repairInfo.repairs : '-';
+            const pill = document.getElementById('repairPill');
+            pill.dataset.state = state;
             document.getElementById('repairCount').textContent = count;
-            pill.setAttribute('aria-label', `${text || 'Streak Repair'}, ${count} owned`);
+            pill.title = `Streak repairs: ${count}`;
+            pill.setAttribute('aria-label',
+                state === 'ready'
+                    ? `Use a Streak Repair to bring back your ${repairInfo.lostStreak}-day streak, ${count} owned`
+                    : `Streak Repair, ${count} owned`);
         }
 
-        function showToast(message, kind) {
+        function showToast(message, kind, title) {
             const toast = document.getElementById('toast');
-            toast.className = 'toast ' + kind;
-            toast.innerHTML = (kind === 'success' ? '<span class="toast-check">✓</span>' : '') + message;
+            toast.className = 'toast ' + kind;                 // repair | counted | info
+            const titleEl = document.getElementById('toastTitle');
+            titleEl.textContent = title || '';
+            titleEl.hidden = !title;
+            document.getElementById('toastMsg').textContent = message;
+            document.getElementById('toastIcon').src =
+                kind === 'counted' ? '/icons/coffee.png' : '/icons/kettle.png';
             clearTimeout(showToast.timer);
-            showToast.timer = setTimeout(() => toast.classList.add('is-hidden'), 2500);
+            showToast.timer = setTimeout(() => toast.classList.add('is-hidden'), title ? 5000 : 2500);
         }
+
+        document.getElementById('toastClose').addEventListener('click', function() {
+            document.getElementById('toast').classList.add('is-hidden');
+        });
 
         function openRepairDialog() {
-            document.getElementById('repairTitle').textContent =
-                `Use 1 Streak Repair to bring back your ${repairInfo.lostStreak}-day streak?`;
+            // "shop" = missed one day but owns no repair: same dialog, with a Go to Shop button
+            const noRepair = getRepairState() === 'shop';
+            document.getElementById('repairTitle').textContent = noRepair
+                ? `You have no Streak Repair. Buy one in the Shop to bring back your ${repairInfo.lostStreak}-day streak?`
+                : `Use 1 Streak Repair to bring back your ${repairInfo.lostStreak}-day streak?`;
+            document.getElementById('repairUse').textContent = noRepair ? 'Go to Shop' : 'Use';
             document.getElementById('repairOverlay').classList.remove('is-hidden');
             document.getElementById('repairUse').focus();
         }
@@ -317,8 +400,8 @@
                 const k = duration ? Math.min((now - start) / duration, 1) : 1;
                 const n = Math.round(target * k);
                 number.textContent = n;
-                label.textContent = `${n}/100 days`;
-                fill.style.width = n + '%';
+                label.textContent = `${n} / ${streakGoal} days`;
+                fill.style.width = (n / streakGoal * 100) + '%';
                 if (k < 1) {
                     requestAnimationFrame(tick);
                 } else {
@@ -343,12 +426,17 @@
             streakDays  = me.streak ?? 0;
             totalXP     = me.totalXp ?? 0;
             activeToday = !!me.activeToday;
+            serverToday = me.serverToday ?? serverToday;
+            secondsUntilReset = me.secondsUntilReset ?? secondsUntilReset;
             repairInfo  = readRepairInfo(me);
             updateRepairPill();
 
             animateStreak(restored, function() {
                 updateUI();
-                showToast(`Streak restored: ${restored} days`, 'success');
+                showToast(
+                    `You used 1 streak repair. Your ${restored}-day streak is safe. ` +
+                    `${repairInfo.repairs} ${repairInfo.repairs === 1 ? 'repair' : 'repairs'} left.`,
+                    'repair', 'Streak Restored');
             });
         }
 
@@ -367,10 +455,8 @@
 
         document.getElementById('repairPill').addEventListener('click', function() {
             const state = getRepairState();
-            if (state === 'ready') {
+            if (state === 'ready' || state === 'shop') {
                 openRepairDialog();
-            } else if (state === 'shop') {
-                window.location.href = 'Shop.html';
             } else if (state === 'late') {
                 showToast('Too late to repair.', 'info');
             } else if (state === 'alive') {
@@ -381,6 +467,7 @@
         document.getElementById('repairCancel').addEventListener('click', closeRepairDialog);
         document.getElementById('repairUse').addEventListener('click', function() {
             closeRepairDialog();
+            if (getRepairState() === 'shop') { window.location.href = 'Shop.html'; return; }
             useStreakRepair();
         });
         document.getElementById('repairOverlay').addEventListener('click', function(e) {
@@ -389,9 +476,6 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeRepairDialog();
         });
-
-        // Refresh when the player comes back with the Back button (e.g. after buying in the Shop)
-        window.addEventListener('pageshow', function(e) { if (e.persisted) loadPlayer(); });
 
         // The server keeps the streak. Reading it from the API means this page
         // can never award a streak bonus the server did not award, and can never
@@ -402,6 +486,8 @@
                 streakDays  = me.streak ?? 0;
                 totalXP     = me.totalXp ?? 0;
                 activeToday = !!me.activeToday;
+                serverToday = me.serverToday ?? null;
+                secondsUntilReset = me.secondsUntilReset ?? null;
                 if (me.rank) {
                     rankInfo = {
                         name:  me.rank.name,

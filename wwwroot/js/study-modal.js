@@ -1,7 +1,11 @@
 // Study mode pop-up: choose Daily Challenge, Courses or Multiplayer, then go to that page
 (function () {
-    const studyBtn = document.querySelector('.study-button');
-    if (!studyBtn) return;   // page without the sidebar
+    // Every "Study" entry point on the page opens the same pop-up: the sidebar
+    // button, and the "Study today" button on Progress.
+    const studyBtns = document.querySelectorAll('.study-button');
+    if (!studyBtns.length) return;   // page without the sidebar
+
+    let lastTrigger = studyBtns[0];
 
     const overlay = document.createElement('div');
     overlay.className = 'study-overlay';
@@ -47,7 +51,8 @@
         });
     }
 
-    function openModal() {
+    function openModal(trigger) {
+        lastTrigger = trigger || studyBtns[0];
         select(null);                       // always start with nothing selected
         overlay.classList.add('active');
         options[0].focus();
@@ -58,10 +63,12 @@
         overlay.classList.remove('active');
     }
 
-    // Open from the sidebar Study button
-    studyBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        openModal();
+    // Open from any Study button (sidebar, Progress "Study today")
+    studyBtns.forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            openModal(btn);
+        });
     });
 
     // Pick a mode
@@ -78,7 +85,7 @@
     // Three ways to close: Cancel button, click outside the window, Escape key
     overlay.querySelector('#studyCancel').addEventListener('click', function () {
         closeModal();
-        studyBtn.focus();
+        lastTrigger.focus();
     });
 
     overlay.addEventListener('click', function (e) {
@@ -88,7 +95,7 @@
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && overlay.classList.contains('active')) {
             closeModal();
-            studyBtn.focus();
+            lastTrigger.focus();
         }
     });
 

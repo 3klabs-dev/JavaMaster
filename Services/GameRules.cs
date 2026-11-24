@@ -23,6 +23,11 @@ public static class GameRules
     public static readonly int[] DeckItemOptions = { 10, 15, 20 };
     public static readonly string[] DeckQuestionTypes =
     {
-        "multiple-choice", "true-false", "matching", "fill-blank"
+        "multiple-choice", "true-false", "matching", "fill-blank",
+        "fill-blank-code", "drag-drop-code"
     };
+
+    // A deck built in the deck builder is stored as one JSON array of cards.
+    public const int DeckCardMaxCount = 100;
+    public const int DeckCardsMaxJsonLength = 200_000;
 }

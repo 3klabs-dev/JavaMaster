@@ -42,6 +42,12 @@ public class MeController : ControllerBase
 
         // Streak days are counted in Philippine time (UTC+8)
         var today = StreakService.Today();
+
+        // Seconds until the next Philippine midnight, so the Progress countdown
+        // does not depend on the browser's timezone.
+        var nextMidnightUtc = today.AddDays(1).ToDateTime(TimeOnly.MinValue).AddHours(-8);
+        var secondsUntilReset = (int)Math.Max(0, (nextMidnightUtc - DateTime.UtcNow).TotalSeconds);
+
         var last = user.LastActivityDate;
         var alive = last != null && last >= today.AddDays(-1);   // played today or yesterday
 
@@ -69,6 +75,8 @@ public class MeController : ControllerBase
             },
             streak = alive ? user.CurrentStreak : 0,
             activeToday = last == today,
+            serverToday = today.ToString("yyyy-MM-dd"),
+            secondsUntilReset,
             missedDays,                                            // 0 = fine, 1 = repairable, 2+ = too late
             lostStreak = missedDays > 0 ? user.CurrentStreak : 0,  // the "14" in "Repair 14-day streak"
             canRepairStreak = missedDays == 1 && repairs > 0,      // missed exactly one day AND owns 1+

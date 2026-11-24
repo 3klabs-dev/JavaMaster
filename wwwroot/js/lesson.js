@@ -27,6 +27,15 @@
         drink: '/model/James Gosling Drinking Coffee.png'
     };
 
+    // Restarts the jump each time, so it plays again for every correct answer.
+    function jumpModel() {
+        var m = $('model');
+        if (!m) return;
+        m.classList.remove('jump');
+        void m.offsetWidth;   // forces the browser to restart the animation
+        m.classList.add('jump');
+    }
+
     /* ---------------------------------------------------------------- state */
     var node = null;        // the node, straight from the server
     var questions = [];     // the questions, in order
@@ -50,6 +59,14 @@
             .replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     };
+
+    // Course authors may use <b>, <em> and <code> in a prompt. Everything else
+    // is escaped, so a prompt can never run script. Blank lines become paragraphs.
+    function formatPrompt(text) {
+        return esc(text || '')
+            .replace(/&lt;(\/?)(b|em|code)&gt;/g, '<$1$2>')
+            .replace(/\n\n/g, '</p><p>');
+    }
 
     function pref(k) { try { return localStorage.getItem(k) !== 'false'; } catch (e) { return true; } }
     function setPref(k, v) {
@@ -280,7 +297,7 @@
                 }).join('') + '</div>';
         }
 
-        st.innerHTML = '<div class="prompt"><p>' + esc(q.prompt || '').replace(/\n\n/g, '</p><p>') + '</p></div>' +
+        st.innerHTML = '<div class="prompt"><p>' + formatPrompt(q.prompt) + '</p></div>' +
             body + '<button class="btn" id="mainBtn"></button>';
 
         if (q.type === 'FillBlank' && phase === 'answer') {
@@ -448,7 +465,7 @@
             serverOutput = res.output || null;
             correcting = !res.correct;
             phase = res.correct ? 'correct' : 'wrong';
-            if (res.correct) sfx('correctSound'); else sfx('wrongSound');
+            if (res.correct) { sfx('correctSound'); jumpModel(); } else sfx('wrongSound');
             render();
         }).catch(function (err) {
             busy = false;

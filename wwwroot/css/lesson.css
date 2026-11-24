@@ -452,6 +452,26 @@
         max-height: 340px;
     }
 
+    /* Model jump when the answer is correct */
+    @keyframes model-jump {
+        0%   { transform: translateY(0); }
+        35%  { transform: translateY(-28px); }
+        60%  { transform: translateY(0); }
+        75%  { transform: translateY(-8px); }
+        100% { transform: translateY(0); }
+    }
+
+    .model.jump {
+        animation: model-jump .5s ease-out;
+    }
+
+    /* People who turn on "reduce motion" in their system get no jump. */
+    @media (prefers-reduced-motion: reduce) {
+        .model.jump {
+            animation: none;
+        }
+    }
+
     .bubbles {
         position: absolute;
         left: calc(6% + 150px);

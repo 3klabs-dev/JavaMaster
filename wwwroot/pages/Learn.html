@@ -130,7 +130,7 @@
 
                     <!-- 4 · Java Basics 1 (practice) -->
                     <div class="lesson-node locked" data-step="4" data-node-id="4" data-type="practice"
-                         data-href="Practice 1.html" data-in="top" data-out="bottom"
+                         data-href="/lesson/Java Basics 1-Practice.html" data-in="top" data-out="bottom"
                          style="--x:282; --y:803" tabindex="0" role="button">
                         <img src="/nodes/Practice node.png" alt="Java Basics 1 practice">
                         <div class="lesson-label left" style="--lw:130px; --sw:130px">
@@ -280,6 +280,40 @@
             });
 
             drawPath();
+            jumpToCurrent();
+        }
+
+        /* Opening Learn from anywhere lands on the current node.
+           Reload and the Back button keep the browser's restored scroll, so no jump. */
+        let jumped = false;
+
+        function getScroller(el) {
+            let p = el.parentElement;
+            while (p) {
+                const o = getComputedStyle(p).overflowY;
+                if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight) return p;
+                p = p.parentElement;
+            }
+            return window;
+        }
+
+        function jumpToCurrent() {
+            if (jumped) return;
+            jumped = true;
+            const nav = performance.getEntriesByType('navigation')[0];
+            if (nav && nav.type !== 'navigate') return;
+            const node = document.querySelector('.lesson-node.current');
+            if (!node) return;
+            const sc = getScroller(node);
+            const r = node.getBoundingClientRect();
+            if (sc === window) {
+                if (r.top >= 0 && r.bottom <= window.innerHeight) return;   // already visible
+                window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.4, behavior: 'auto' });
+            } else {
+                const cr = sc.getBoundingClientRect();
+                if (r.top >= cr.top && r.bottom <= cr.bottom) return;       // already visible
+                sc.scrollTo({ top: sc.scrollTop + (r.top - cr.top) - sc.clientHeight * 0.4, behavior: 'auto' });
+            }
         }
 
         function anchor(node, side) {
