@@ -136,8 +136,8 @@ public static class DbSeeder
 
         // Hello World: rewards match your prototype (120 XP, +30 coins)
         var hello = Node("Hello World", "Your journey starts here.", NodeType.Lesson, 1, tHello, 120, 30);
-        hello.IntroText = "Welcome to the first chapter of the Java course! 🚀\n\nJava is a popular programming language designed by James Gosling to be \"written once, run anywhere\" with a Java Virtual Machine (JVM).";
-        hello.OutroText = "Now that you can print a line of text, move on to the next lesson to start giving your code a place to keep its values.";
+        hello.IntroText = "Welcome to your first Java lesson! 🚀\n\nA program can talk to the player by printing text on the screen. In this lesson you will print your very first line, one small step at a time. No prior experience needed.";
+        hello.OutroText = "You can now make Java print text on the screen. Next, you'll learn how a program remembers values by giving them names.";
 
         intro.Nodes.Add(hello);
         // The other nodes have no questions yet. Their rewards are placeholders.

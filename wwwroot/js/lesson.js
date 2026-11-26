@@ -252,7 +252,7 @@
             img = MODEL.wave;
             m.src = img;
             st.innerHTML = '<div class="text">' +
-                (node.introText || '').split(/\n\n/).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') +
+                '<p>' + formatPrompt(node.introText || '') + '</p>' +
                 '</div><button class="btn mid" data-action="start">Next</button>';
             return;
         }
@@ -327,7 +327,7 @@
         $('model').src = MODEL.drink;
         $('stage').innerHTML = '<div class="text finish">' +
             '<p>' + esc('Great Job! You finished ' + title + '. The next lesson is now unlocked.') + '</p>' +
-            outro.map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') +
+            outro.map(function (t) { return '<p>' + formatPrompt(t) + '</p>'; }).join('') +
             '</div><button class="btn mid" data-action="finishNext">Next</button>';
     }
 

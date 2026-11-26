@@ -29,201 +29,201 @@ public static class LessonContent
     {
         // ---------------------------------------------------------------- Hello World
         new(1, "Hello World",
-            "Welcome to the first chapter of the Java course! 🚀\n\nJava is a popular programming language designed by James Gosling to be \"written once, run anywhere\" with a Java Virtual Machine (JVM).",
-            "Now that you can print a line of text, move on to the next lesson to start giving your code a place to keep its values.",
+            "Welcome to your first Java lesson! 🚀\n\nA program can talk to the player by printing text on the screen. In this lesson you will print your very first line, one small step at a time. No prior experience needed.",
+            "You can now make Java print text on the screen. Next, you'll learn how a program remembers values by giving them names.",
             new[]
         {
             new Q("hello-world.q1", QuestionType.MultipleChoice, "Hello World",
-                "In Java, we use certain statements to display output. For example, <b>System.out.println();</b> is used to print text to the console.\n\nWhich Java statement prints text to the console?",
+                "Programs talk to us by printing text. In Java, the line that prints looks like this:\n\n<b>System.out.println(...);</b>\n\nRead it in two parts: <b>System.out</b> points at the screen, and <b>println</b> means \"print a line\".\n\nWhich of these two lines actually shows text on the screen?",
                 new { options = new[] {
                     new { id = "a", text = "System.out.println(\"Hello\");" },
                     new { id = "b", text = "String message = \"Hello\";" } } },
-                new { correctOptionId = "a", correctMessage = "Great job!" },
-                "Only one of these actually sends text to the console. The other one stores a value in memory without displaying it."),
+                new { correctOptionId = "a", correctMessage = "Exactly! println shows the text, then starts a new line." },
+                "Close! One line stores the text in a variable, but storing is not showing. Find the line that prints."),
 
             new Q("hello-world.q2", QuestionType.FillBlank, "Hello World",
-                "Code \"<b>Hello World!</b>\" between the opening and closing quotation marks.",
+                "Now let's print your own words.\n\nThe line below already has the Java parts. Only the text inside the quotation marks is missing.\n\nType exactly: <b>Hello World!</b>\n\nThe quotation marks tell Java that this is text, so type only what goes between them.",
                 new { template = new[] { "System", ".", "out", ".", "println", "(", "\"{{blank}}\"", ")", ";" } },
                 new { accepted = new[] { "Hello World!" }, caseSensitive = true,
-                      output = "Hello World!", correctMessage = "Excellent!" },
-                "Java is case-sensitive, so the text has to match exactly - the same capital letters and the same exclamation mark."),
+                      output = "Hello World!", correctMessage = "That's it! Java prints exactly the letters inside the quotes." },
+                "Almost! Match the capital letters, spaces and the ! exactly. Java prints precisely what is inside the quotes."),
 
             new Q("hello-world.q3", QuestionType.ArrangeTokens, "Hello World",
-                "Let's remember how to code an output. Code an output that says \"<b>Hello World!</b>\".",
+                "Your turn to build the whole line from scratch.\n\nPut the pieces in order to print <b>Hello World!</b>.\n\nStart with the part that names the screen (<b>System.out</b>), then choose the action (<b>println</b>), put the text inside the parentheses, and finish with a semicolon (;).",
                 new { tokens = new[] { "System", "out", "println", "(", ")", "\"Hello World!\"", ";" },
                       lines = new[] { new[] { "{{1}}", ".", "{{2}}", ".", "{{3}}", "{{4}}", "{{5}}", "{{6}}", "{{7}}" } } },
                 new { order = new[] { "System", "out", "println", "(", "\"Hello World!\"", ")", ";" },
-                      output = "Hello World!", correctMessage = "Excellent!" },
-                "The order of the pieces matters. Build it the way Java reads a call: the object first, then the method, then the value."),
+                      output = "Hello World!", correctMessage = "Perfect - that is the line in the order Java reads it." },
+                "Not quite. Read it like a sentence: System, then out, then println, then the text in ( ), then ;."),
 
             new Q("hello-world.q4", QuestionType.MultipleChoice, "Hello World",
-                "In Java, <b>System.out.println();</b> prints text and moves to a new line, while <b>System.out.print();</b> prints text but stays on the same line.\n\nWhich statement prints text without moving to a new line?",
+                "One tiny difference changes the ending.\n\n<b>println</b> prints the text and then presses Enter, so the next output starts on a new line. <b>print</b> stays exactly where it is.\n\nWhich line leaves the next output on the same line?",
                 new { options = new[] {
                     new { id = "a", text = "System.out.println(\"Welcome\");" },
                     new { id = "b", text = "System.out.print(\"Welcome\");" } } },
-                new { correctOptionId = "b", correctMessage = "Well done!" },
-                "One of these ends the line and moves the cursor down. The other leaves the cursor exactly where it is."),
+                new { correctOptionId = "b", correctMessage = "Yes! print leaves the next output on the same line." },
+                "Almost! println moves to a new line at the end. Choose the one that stays on the same line."),
 
             new Q("hello-world.q5", QuestionType.FillSlots, "Hello World",
-                "Code an output that displays \"<b>The result is: 42</b>\".\nRemember print stays on the same line, println moves to a new line.",
+                "Last step - two lines working together.\n\nWe want the screen to show:\n\n<b>The result is: 42</b>\n\nBecause 42 must stay on the same line as the words, the first line must not press Enter. The second line finishes the sentence.\n\nFill in the two printing words.",
                 new { lines = new[] {
                         new[] { "System", ".", "out", ".", "{{1}}", "(", "\"The result is: \"", ")", ";" },
                         new[] { "System", ".", "out", ".", "{{2}}", "(", "42", ")", ";" } },
                       bank = new[] { "println", "print" } },
                 new { slots = new Dictionary<string, string> { ["1"] = "print", ["2"] = "println" },
-                      output = "The result is: 42", correctMessage = "Amazing!" },
-                "The first statement has to leave the cursor on the same line. The second one has to start on a new line.")
+                      output = "The result is: 42", correctMessage = "Excellent! The first line stays put; the second finishes it." },
+                "Close! The first line must stay on the same line; the second one finishes it.")
         }),
 
         // ------------------------------------------------------------------- Variables
         new(2, "Variables",
-            "Welcome to lesson 2! 🚀\n\nA variable is a named container that holds a value in memory. Before Java lets you use one, you must declare it — and a declaration always starts with the type of data it holds.",
-            "Now that your values have names, move on to the next lesson to start choosing the right type for each one.",
+            "Welcome to lesson 2! 🚀\n\nA program needs to remember things while it runs: a score, a name, whether a level is finished. In Java, each value lives in a named box called a <b>variable</b>. In this lesson you will create your first boxes and put values inside them.",
+            "You can now store values and give them names. Next, you'll choose the right kind of box for each value so Java knows what it is holding.",
             new[]
         {
             new Q("variables.q1", QuestionType.MultipleChoice, "Variables",
-                "A declaration tells Java three things: the type of data the variable holds, the name you will use for it, and optionally the value it starts with.\n\nWhich of these is a valid variable declaration?",
+                "A variable is a named box that holds a value. To create one, Java wants three things in this order:\n\n<b>type</b>, then <b>name</b>, then <b>value</b>.\n\nFor example, <b>int score = 100;</b> means: make an <em>int</em> box called <em>score</em> and put <em>100</em> in it.\n\nWhich line creates a box called age that holds 20?",
                 new { options = new[] {
                     new { id = "a", text = "int age = 20;" },
                     new { id = "b", text = "age = 20;" },
                     new { id = "c", text = "variable int age = 20;" } } },
-                new { correctOptionId = "a", correctMessage = "Great job!" },
-                "Nice try! Remember the order: type first, then name, then value."),
+                new { correctOptionId = "a", correctMessage = "Exactly! Type, then name, then value." },
+                "Close! Compare each option with the example. Which one has all three parts in the right place?"),
 
             new Q("variables.q2", QuestionType.FillBlank, "Variables",
-                "The type tells Java how much memory to reserve and what the variable is allowed to hold. Exactly one of Java's primitive types stores a decimal number like 9.99 without needing a suffix on the value.\n\nFill in the missing type.",
+                "Now pick the right kind of box.\n\nWhole numbers, like 20, use <b>int</b>. Numbers with a decimal part, like 9.99, use <b>double</b>.\n\nFill in the type for 9.99.",
                 new { template = new[] { "{{blank}}", "price", "=", "9.99", ";" } },
                 new { accepted = new[] { "double" }, caseSensitive = true,
-                      correctMessage = "Perfect - double holds decimal values." },
-                "Almost! Java is case sensitive, so check how the type is written."),
+                      correctMessage = "Yes! double is the usual type for decimals." },
+                "Almost! The paragraph names the type for decimal numbers. Copy it exactly, including the capital letters."),
 
             new Q("variables.q3", QuestionType.FillSlots, "Variables",
-                "A boolean variable can hold only two values: true or false. It is often used as a flag, such as isReady.\n\nBuild the statement that declares isReady and sets it to true.",
+                "Some values can only be one of two things: yes or no, on or off, finished or not. Java stores that in a <b>boolean</b>, which can only be <b>true</b> or <b>false</b>.\n\nLet's create a boolean called isReady and set it to true.\n\nBuild the line.",
                 new { lines = new[] { new[] { "{{1}}", "{{2}}", "=", "{{3}}", ";" } },
                   bank = new[] { "boolean", "isReady", "true", "false", "int", "String", "null" } },
                 new { slots = new Dictionary<string, string> { ["1"] = "boolean", ["2"] = "isReady", ["3"] = "true" },
-                      correctMessage = "Nice! A boolean is either true or false." },
-                "Close! The prompt gives you the name and the value. Which type holds only true or false?"),
+                      correctMessage = "Nice! A boolean is always true or false." },
+                "Close! The question says this box can only hold one of two values. Which type is built for exactly that?"),
 
             new Q("variables.q4", QuestionType.MultipleChoice, "Variables",
-                "Java identifiers - the names you give variables and methods - are case-sensitive, may contain letters, digits, underscores and dollar signs, and cannot start with a digit. They also cannot be a keyword such as class or int.\n\nWhich of these is not a valid variable name?",
+                "Variable names are for humans, so Java has a few simple rules:\n\n• they can use letters, digits, _ and $\n• they cannot start with a digit\n• they cannot be a Java keyword like int or class\n\nWhich of these names breaks a rule?",
                 new { options = new[] {
                     new { id = "a", text = "_total" },
                     new { id = "b", text = "$rate" },
                     new { id = "c", text = "2ndValue" },
                     new { id = "d", text = "myScore" } } },
-                new { correctOptionId = "c", correctMessage = "Right - a name cannot begin with a digit." },
-                "So close! Look at where each name starts. Which one begins with something Java does not allow?"),
+                new { correctOptionId = "c", correctMessage = "Right! A name cannot start with a digit." },
+                "So close! Test each name against the three rules, one at a time."),
 
             new Q("variables.q5", QuestionType.FillSlots, "Variables",
-                "A final variable cannot be changed after it is created, which makes it a constant. Constants are written in ALL CAPS by convention. The highest score is a whole number.\n\nBuild the constant declaration for MAX_SCORE equal to 100.",
+                "Some values should never change, like the highest possible score. Java marks those with <b>final</b>, and programmers write their names in CAPITAL LETTERS by convention.\n\nThe highest score is a whole number, and it is 100.\n\nBuild the constant declaration.",
                 new { lines = new[] { new[] { "final", "{{1}}", "{{2}}", "=", "{{3}}", ";" } },
                   bank = new[] { "int", "boolean", "MAX_SCORE", "MIN_SCORE", "100", "50", "final", "static" } },
                 new { slots = new Dictionary<string, string> { ["1"] = "int", ["2"] = "MAX_SCORE", ["3"] = "100" },
-                      correctMessage = "Great - that is a constant int." },
-                "Nice try! Think about which type is made for whole numbers like 100.")
+                      correctMessage = "Perfect! final int MAX_SCORE = 100; cannot be changed later." },
+                "Nice try! The paragraph explains what final does and how a constant's name should look. Check each blank against it.")
         }),
 
         // ----------------------------------------------------------------- Data Types
         new(3, "Data Types",
-            "Welcome to lesson 3! 🚀\n\nJava has eight primitive data types: byte, short, int and long for whole numbers, float and double for decimals, plus char and boolean.",
-            "Now that our variables know what kind of data they hold, move on to the next lesson to start giving them behaviors and actions.",
+            "Welcome to lesson 3! 🚀\n\nLesson 2 gave you boxes. Now you'll choose the right kind of box for each value. Java has a small set of basic types, and most of the time you only need four: <b>int</b> for whole numbers, <b>double</b> for decimals, <b>char</b> for one character, and <b>boolean</b> for true or false. Let's meet them one at a time.",
+            "You now know the basic types and when to use them. Next, you'll use operators to calculate and compare those values.",
             new[]
         {
             new Q("data-types.q1", QuestionType.MultipleChoice, "Data Types",
-                "The four whole-number types are byte, short, int and long. The two decimal types are float and double. Then there is char for a single character and boolean for true or false.\n\nWhich type stores a single 16-bit Unicode character, such as a letter?",
+                "Start with a single character: one letter, one digit, or one symbol. Java stores it in a <b>char</b>.\n\nFor example, <b>char grade = 'A';</b> holds just the letter A.\n\nWhich type holds exactly one character?",
                 new { options = new[] {
                     new { id = "a", text = "String" },
                     new { id = "b", text = "char" },
                     new { id = "c", text = "int" },
                     new { id = "d", text = "byte" } } },
-                new { correctOptionId = "b", correctMessage = "Right - char holds exactly one character." },
-                "Almost! Think about which type holds one letter, not a whole word."),
+                new { correctOptionId = "b", correctMessage = "Right! char holds exactly one character." },
+                "Almost! Look at the example in the question. How many characters are inside the quotes?"),
 
             new Q("data-types.q2", QuestionType.FillBlank, "Data Types",
-                "When a whole number is too large for an int, Java lets you write it as a long by adding the letter L to the end of the number. Without the L, the number is just an int.\n\nFill in the missing suffix.",
+                "Whole numbers are usually stored in an <b>int</b>. But some numbers are too big for int. For those, Java has <b>long</b>.\n\nTo tell Java \"this number is a long\", add the letter <b>L</b> right after the digits. For example, <b>long total = 42L;</b>\n\nFill in the missing letter for this line.",
                 new { template = new[] { "long", "total", "=", "42", "{{blank}}", ";" } },
                 new { accepted = new[] { "L", "l" }, caseSensitive = false,
-                      correctMessage = "Correct - 42L is a long literal." },
-                "Nearly there! Think about the letter that tells Java a number is a long, and where it goes."),
+                      correctMessage = "Correct! 42L tells Java this is a long." },
+                "Nearly there! Compare your line with the example. What did the example add after the digits?"),
 
             new Q("data-types.q3", QuestionType.FillSlots, "Data Types",
-                "Every decimal literal without a suffix is a double. To store a smaller decimal in a float you must add an f - otherwise the compiler assumes you meant a double.\n\nBuild the statement that stores the value 3.14 in a variable called pi.",
+                "Decimals like 3.14 are stored in a <b>double</b>. That is Java's usual choice for decimal numbers.\n\nBuild the line that stores 3.14 in a variable called pi.",
                 new { lines = new[] { new[] { "{{1}}", "{{2}}", "=", "3.14", ";" } },
                   bank = new[] { "double", "float", "pi", "int", "long", "3.14", "3.14f" } },
                 new { slots = new Dictionary<string, string> { ["1"] = "double", ["2"] = "pi" },
-                      correctMessage = "Nice - double pi = 3.14;" },
-                "Close! The value 3.14 is already a decimal. Which type is the usual choice for decimals?"),
+                      correctMessage = "Nice! double pi = 3.14; stores the decimal." },
+                "Close! The paragraph describes the kind of number 3.14 is. Choose the type for that kind, then the name."),
 
             new Q("data-types.q4", QuestionType.MultipleChoice, "Data Types",
-                "When both operands are whole numbers, Java does integer division and throws away the decimal part. To keep the decimal you must use a double or a float.\n\nWhat does  int x = 9; int y = 2; System.out.println(x / y);  print?",
+                "Here's a surprise: when both numbers are whole, Java divides them as whole numbers and throws away the decimal part.\n\nSo 9 / 2 does not give 4.5. It gives the whole-number result, with the remainder dropped.\n\nWhat does <b>int x = 9; int y = 2; System.out.println(x / y);</b> print?",
                 new { options = new[] {
                     new { id = "a", text = "4.5" },
                     new { id = "b", text = "4" },
                     new { id = "c", text = "5" },
                     new { id = "d", text = "Error" } } },
-                new { correctOptionId = "b", correctMessage = "Right - 9 / 2 is 4, the remainder is dropped." },
-                "Good try! Java drops the decimal part when both numbers are whole. What is 9 divided by 2 with the decimal part removed?"),
+                new { correctOptionId = "b", correctMessage = "Right! 9 / 2 is 4; the .5 is dropped." },
+                "Good try! Re-read the rule in the question, then do the division the way Java would, not the way a calculator would."),
 
             new Q("data-types.q5", QuestionType.FillSlots, "Data Types",
-                "A char literal is wrapped in single quotes, and a boolean holds only true or false. The declarations below store the letter A, and a flag that starts out false because the work is not finished yet.\n\nBuild the two declarations below.",
+                "Two more types to finish.\n\nA <b>char</b> is one character and goes in <b>single quotes</b>: <b>'A'</b>. A <b>boolean</b> is either <b>true</b> or <b>false</b>.\n\nStore the letter A in <b>letter</b>, and set <b>finished</b> to false because the work is not done yet.\n\nFill in the two values.",
                 new { lines = new[] {
                         new[] { "char", "letter", "=", "{{1}}", ";" },
                         new[] { "boolean", "finished", "=", "{{2}}", ";" } },
                   bank = new[] { "'A'", "A", "true", "false", "'B'", "'1'" } },
                 new { slots = new Dictionary<string, string> { ["1"] = "'A'", ["2"] = "false" },
-                      correctMessage = "Perfect - char uses single quotes, and a not-yet-finished flag is false." },
-                "Almost! Think about how a character is written, and what a flag for unfinished work should start as.")
+                      correctMessage = "Perfect! Single quotes for a char, false for unfinished work." },
+                "Almost! Use the example for the character, and think about what \"not finished yet\" means for the second value.")
         }),
 
         // ----------------------------------------------------- Operators & Expressions
         new(5, "Operators & Expressions",
-            "Welcome to lesson 4! 🚀\n\nOperators let you work with values — adding and dividing them, comparing them, and combining conditions. An expression is any combination of values and operators that produces a result.",
-            "Now that you can calculate and compare values, move on to the next lesson to start making your programs make decisions.",
+            "Welcome to lesson 4! 🚀\n\nYou can store values now. The next step is to do something with them: add them, compare them, or change them. The symbols that do this are called <b>operators</b>, and a calculation they form is an <b>expression</b>. We'll try the most useful ones one at a time.",
+            "You can now calculate and compare values. Next, your programs will use these comparisons to make decisions.",
             new[]
         {
             new Q("operators-expressions.q1", QuestionType.MultipleChoice, "Operators & Expressions",
-                "Java groups its operators into families: arithmetic (+ - * / %), unary (+ - ++ --), relational (> < >= <= == !=), logical (&& || !) and assignment (= += -= *= /=).\n\nWhich operator returns the remainder of a division?",
+                "Most operators look like math: <b>+</b> adds, <b>-</b> subtracts, <b>*</b> multiplies, <b>/</b> divides.\n\nOne more gives you what is left over after a division. For example, 7 % 2 is 1, because 7 is 6 plus 1 left over.\n\nWhich operator gives the remainder?",
                 new { options = new[] {
                     new { id = "a", text = "/" },
                     new { id = "b", text = "%" },
                     new { id = "c", text = "*" },
                     new { id = "d", text = "+" } } },
-                new { correctOptionId = "b", correctMessage = "Right - % is the modulus operator." },
-                "One of these is named after the mathematical term for remainder. The others either divide, multiply or add."),
+                new { correctOptionId = "b", correctMessage = "Right! % gives the remainder." },
+                "One of these is the remainder operator. Re-read the example with 7 and 2, then compare it with the options."),
 
             new Q("operators-expressions.q2", QuestionType.FillBlank, "Operators & Expressions",
-                "When both operands are whole numbers, Java does integer division and drops the remainder - so 5 / 2 is 2, not 2.5. Casting one operand to a floating-point type forces a decimal result. Java has two: float and double. Either one works here.\n\nFill in the missing type inside the cast.",
+                "Dividing whole numbers has a catch. <b>5 / 2</b> gives <b>2</b>, not 2.5, because Java drops the decimal part.\n\nTo get 2.5, you can temporarily turn one number into a decimal. That is called a <b>cast</b>: put a type in parentheses before the value.\n\nJava's two decimal types are <b>float</b> and <b>double</b>. Fill in one of them.",
                 new { template = new[] { "System", ".", "out", ".", "println", "(", "(", "{{blank}}", ")", "a", "/", "b", ")", ";" } },
                 new { accepted = new[] { "double", "float" }, caseSensitive = true,
-                      output = "2.5", correctMessage = "Correct - the cast forces decimal division." },
-                "It goes inside the parentheses, before the operand, and it has to be one of Java's two floating-point types. Java is case-sensitive, so spell it exactly as Java writes it."),
+                      output = "2.5", correctMessage = "Correct! The cast forces decimal division." },
+                "Either decimal type works here. Pick one from the paragraph and spell it exactly."),
 
             new Q("operators-expressions.q3", QuestionType.FillSlots, "Operators & Expressions",
-                "The compound assignment operator += adds and assigns in one step, so a += 3 means a = a + 3. It can be used directly inside a print statement.\n\nBuild the statement that adds 3 to a and prints the new value, when a is 5.",
+                "Java has shortcuts for changing a value. <b>a += 3</b> means <b>a = a + 3</b>: add three, then keep the result.\n\nSuppose a is 5. Build the line that adds 3 to a and prints the new value.",
                 new { lines = new[] { new[] { "System", ".", "out", ".", "println", "(", "a", "{{1}}", "3", ")", ";" } },
                   bank = new[] { "+=", "-=", "*=", "=", "++" } },
                 new { slots = new Dictionary<string, string> { ["1"] = "+=" },
-                      output = "8", correctMessage = "Nice - a += 3 adds three and prints 8." },
-                "One blank. It has to add three and assign the result in a single step, not just assign the number three."),
+                      output = "8", correctMessage = "Nice! a += 3 adds 3 and prints 8." },
+                "The paragraph describes a shortcut that adds and keeps the result. Match it to the options."),
 
             new Q("operators-expressions.q4", QuestionType.MultipleChoice, "Operators & Expressions",
-                "Relational operators compare two values and produce a boolean. == asks \"are they equal?\", while a single = assigns a value. The && operator means \"and\" and is true only when both sides are true.\n\nWhat does  int a = 5; int b = 2; System.out.println(a > b && b < a);  print?",
+                "Comparisons produce a boolean: <b>true</b> or <b>false</b>. For example, <b>5 > 2</b> is true.\n\nThe <b>&&</b> operator means <b>and</b>: the whole thing is true only if <em>both</em> sides are true.\n\nWhat does <b>int a = 5; int b = 2; System.out.println(a > b && b < a);</b> print?",
                 new { options = new[] {
                     new { id = "a", text = "true" },
                     new { id = "b", text = "false" },
                     new { id = "c", text = "Error" },
                     new { id = "d", text = "1" } } },
-                new { correctOptionId = "a", correctMessage = "Right - 5 > 2 and 2 < 5 are both true." },
-                "Check each comparison on its own before combining them. With && the result depends on both of them."),
+                new { correctOptionId = "a", correctMessage = "Right! 5 > 2 and 2 < 5 are both true." },
+                "Check each side of the && on its own first. What does each comparison give?"),
 
             new Q("operators-expressions.q5", QuestionType.FillSlots, "Operators & Expressions",
-                "x++ is post-increment: it uses the old value of x and then increases it. ++x is pre-increment: it increases first and then uses the new value.\n\nBuild the statement that prints a after increasing it first, when a is 5.",
+                "Two ways to add one:\n\n<b>x++</b> uses the old value first, then adds one.\n<b>++x</b> adds one first, then uses the new value.\n\nSuppose a is 5. Build the line that adds one <em>before</em> printing a.",
                 new { lines = new[] { new[] { "System", ".", "out", ".", "println", "(", "{{1}}", "a", ")", ";" } },
                   bank = new[] { "++", "--", "+", "-" } },
                 new { slots = new Dictionary<string, string> { ["1"] = "++" },
-                      output = "6", correctMessage = "Exactly - ++a increases a before it is used, so it prints 6." },
-                "One blank, and it has to go before the variable because the question asks for the value after the increase.")
+                      output = "6", correctMessage = "Exactly! ++a increases a before it is used, so it prints 6." },
+                "Compare the two forms in the paragraph. Which one uses the new value when it prints?")
         })
     };
 

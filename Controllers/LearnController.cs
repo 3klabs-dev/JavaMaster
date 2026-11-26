@@ -47,7 +47,14 @@ public class LearnController : ControllerBase
             if (playable.Contains(all[p].Id)) { previous = p; break; }
         }
 
-        var unlocked = previous < 0 || await _db.UserNodeProgress.AnyAsync(p =>
+        // A lesson the learner has already finished stays replayable, even if new
+        // content was inserted before it later (for example the practice node).
+        // Without this, a completed lesson can show as Completed on the path but
+        // refuse to open because its new predecessor has not been played yet.
+        var alreadyDone = await _db.UserNodeProgress.AnyAsync(p =>
+            p.UserId == userId && p.LearnNodeId == nodeId && p.Status == ProgressStatus.Completed);
+
+        var unlocked = alreadyDone || previous < 0 || await _db.UserNodeProgress.AnyAsync(p =>
             p.UserId == userId && p.LearnNodeId == all[previous].Id && p.Status == ProgressStatus.Completed);
 
         // "Next" means the next node the learner can actually play, not simply
